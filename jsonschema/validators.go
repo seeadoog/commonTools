@@ -76,7 +76,7 @@ func (l MinLength)Validate(path string,value interface{},errs *[]Error){
 	if len(str) < int(l){
 		*errs = append(*errs,Error{
 			Path: path,
-			Info: "length must be > "+strconv.Itoa(int(l)),
+			Info: "length must be >= "+strconv.Itoa(int(l)),
 		})
 	}
 }

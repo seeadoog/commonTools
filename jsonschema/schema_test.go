@@ -53,9 +53,10 @@ func TestCreateNew(t *testing.T){
 		panic(err)
 	}
 	iv:=map[string]interface{}{
-		"name":"face",
+		"name":"biaoge",
 		"any":"dd",
-		//"key1":"sdfsdf",
+		"key1":"sdfsdf",
+		"key2":"dfds",
 		"son":map[string]interface{}{
 			"age":float64(100),
 		},
@@ -80,10 +81,15 @@ func TestCreateNew2(t *testing.T){
 	}
 
 	iv:=map[string]interface{}{
-		"name":"face",
-		"any":false,
+		"name":"biaoge",
+		"any":"dd",
+		"key1":"sdfsdf",
+		"key2":"dfds",
+		"son":map[string]interface{}{
+			"age":float64(100),
+		},
 	}
-	for i:=0;i<1000000;i++{
+	for i:=0;i<50000;i++{
 		//var errs = []Error{}
 		sc.Validate(context.Background(),iv)
 		//fmt.Println(errs)
@@ -99,6 +105,45 @@ var 	schema =[]byte(`
 	},
 	"then":{
 		"required":["key2"]
+	},
+	"dependencies":{
+		"key1":["key2"]
+	},
+	"allOf":[
+		{
+			"if":{
+				"keyMatch":{
+					"name":"biaoge"
+				}
+			},
+			"then":{
+				"flexProperties":{
+					"key2":{
+						"type":"string",
+						"maxLength":10,
+						"minLength":5
+					}
+				}
+			}
+		}
+	],
+	"setVal":{
+		"sonf\\.3name":"sname-j",
+		"val1":5,
+		"val2":"string",
+		"val3":{
+			"from":"name"
+		},
+		"val5":"${name}",
+		"val4":{
+			"from":"(append)",
+			"args":[
+				"hello ",
+				{
+					"from":"son.age"	
+				}
+			]
+		}
 	},
 	"properties":{
 		"name":{
@@ -147,7 +192,7 @@ var 	schema =[]byte(`
 			}
 		},
 		"key1":{"type":"string"},
-		"key2":{"type":"integer"}
+		"key2":{"type":"string"}
 	}
 }
 

@@ -42,3 +42,49 @@ func NewReplaceKey(i interface{},parent Validator) (Validator, error) {
 	return ReplaceKey(s), nil
 
 }
+/*
+{
+	"setVal":{
+		"key1":1,
+		"key2":"val2",
+		"key3":"${key1}",
+		"key4":{
+			"from":"(append)",
+			"args":["${key1}","${key2}",{"from":"(add)","args":[1,2]}]
+		},
+	}
+}
+ */
+type SetVal map[*JsonPathCompiled]Value
+
+func (s SetVal) Validate(path string, value interface{}, errs *[]Error) {
+	m,ok:=value.(map[string]interface{})
+	if !ok{
+		return
+	}
+	ctx:=Context(m)
+	for key, val := range s {
+		v:=val.Get(ctx)
+		key.Set(m,v)
+	}
+}
+
+func NewSetVal(i interface{},parent Validator)(Validator,error){
+	m,ok:=i.(map[string]interface{})
+	if !ok{
+		return nil, fmt.Errorf("value of setVal must be map[string]interface{} :%v", i)
+	}
+	setVal:=SetVal{}
+	for key, val := range m {
+		v,err:=parseValue(val)
+		if err != nil{
+			return nil, err
+		}
+		jp,err:=parseJpathCompiled(key)
+		if err != nil{
+			return nil,err
+		}
+		setVal[jp] = v
+	}
+	return setVal, nil
+}

@@ -13,6 +13,12 @@ func init() {
 	RegisterValidator("flexProperties", NewFlexProperties)
 	RegisterValidator("not", NewNot)
 	RegisterValidator("allOf", NewAllOf)
+	RegisterValidator("dependencies", NewDependencies)
+	RegisterValidator("equal", NewEqual)
+	RegisterValidator("keyMatch", NewKeyMatch)
+	RegisterValidator("setVal", NewSetVal)
+	RegisterValidator("script",NewScript)
+
 }
 // 忽略的校验器
 var ignoreKeys = map[string]int{
@@ -147,13 +153,13 @@ func NewRequired(i interface{},parent Validator) (Validator, error) {
 	if !ok {
 		return nil, fmt.Errorf("value of 'required' must be array:%v", i)
 	}
-	req := Required{}
-	for _, item := range arr {
+	req := make(Required, len(arr))
+	for idx, item := range arr {
 		itemStr, ok := item.(string)
 		if !ok {
 			return nil, fmt.Errorf("value of 'required item' must be string:%v of %v", item, i)
 		}
-		req = append(req, itemStr)
+		req[idx] = itemStr
 	}
 	return req, nil
 }

@@ -159,3 +159,109 @@ func NewAllOf(i interface{},parent Validator)(Validator,error){
 	return all,nil
 }
 
+type Dependencies map[string][]string
+
+func (d Dependencies) Validate(path string, value interface{}, errs *[]Error) {
+	m,ok:=value.(map[string]interface{})
+	if !ok{
+		return
+	}
+	// 如果存在key，那么必须存在某些key
+	for key, vals := range d {
+		_,ok:=m[key]
+		if ok{
+			for _, val := range vals {
+				_,ok = m[val]
+				if !ok{
+					*errs = append(*errs,Error{
+						Path: appendString(path,".",val),
+						Info: "is required",
+					})
+				}
+			}
+		}
+	}
+}
+
+func NewDependencies(i interface{},parent Validator)(Validator,error){
+	m,ok:=i.(map[string]interface{})
+	if !ok{
+		return nil, fmt.Errorf("value of dependencies must be map[string][]string :%v", i)
+	}
+	vad:=Dependencies{}
+	for key, arris := range m {
+		arrs,ok:=arris.([]interface{})
+		if !ok{
+			return nil, fmt.Errorf("value of dependencies must be map[string][]string :%v", i)
+		}
+		strs:=make([]string, len(arrs))
+		for idx, item := range arrs {
+			str,ok:=item.(string)
+			if !ok{
+				return nil, fmt.Errorf("value of dependencies must be map[string][]string :%v", i)
+
+			}
+			strs[idx] = str
+		}
+		vad[key] = strs
+
+	}
+	return vad, nil
+}
+
+type Equal struct {
+	v interface{}
+}
+
+func (e Equal) Validate(path string, value interface{}, errs *[]Error) {
+	if e.v == value{
+		return
+	}
+	*errs = append(*errs,Error{
+		Path: path,
+		Info: fmt.Sprintf("value must == %v",e.v),
+	})
+}
+
+func NewEqual(i interface{},parent Validator)(Validator,error){
+	return Equal{
+		v: i,
+	},nil
+}
+
+/*
+{
+	"keyMatch":{
+		"key1":"biaoge"
+	}
+}
+ */
+
+type KeyMatch map[string]interface{}
+
+func (k KeyMatch) Validate(path string, value interface{}, errs *[]Error) {
+	m,ok:=value.(map[string]interface{})
+	if !ok{
+		*errs = append(*errs,Error{
+			Path: path,
+			Info: "type is not object",
+		})
+	}
+	for key, want := range k {
+		target:=m[key]
+		if target != want {
+			*errs = append(*errs,Error{
+				Path: appendString(path,".",key),
+				Info: fmt.Sprintf("value must be %v",want),
+			})
+		}
+	}
+}
+
+func NewKeyMatch(i interface{},parent Validator)(Validator,error){
+	m,ok:=i.(map[string]interface{})
+	if !ok{
+		return nil,fmt.Errorf("value of keyMatch must be map[string]interface{} :%v",i)
+	}
+	return KeyMatch(m),nil
+}

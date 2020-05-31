@@ -2,6 +2,7 @@ package jsonschema
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -24,4 +25,28 @@ func appendString(s ...string)string{
 
 func panicf(f string,args ...interface{}){
 	panic(fmt.Sprintf(f,args...))
+}
+
+func String(v interface{})string{
+	switch v.(type) {
+	case string:
+		return v.(string)
+	}
+	return fmt.Sprintf("%v",v)
+}
+
+func Number(v interface{})float64{
+	switch v.(type) {
+	case float64:
+		return v.(float64)
+	case bool:
+		if v.(bool){
+			return 1
+		}
+		return 0
+	case string:
+		i,_:=strconv.ParseFloat(v.(string),64)
+		return i
+	}
+	return 0
 }
