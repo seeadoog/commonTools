@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"strconv"
 )
-
+// 性能提升
 type Properties2 struct {
 	properties map[string]Validator
 	constVals map[string]*ConstVal
 	defaultVals map[string]*DefaultVal
 	replaceKeys map[string]ReplaceKey
-
 }
 
 func (p *Properties2) Validate(path string, value interface{}, errs *[]Error) {
@@ -161,6 +160,9 @@ type ArrProp []PropItem
 
 func (a ArrProp) Validate(path string, value interface{}, errs *[]Error) {
 	for _, item := range a {
+		if item.Val == nil{
+			continue
+		}
 		item.Val.Validate(path,value,errs)
 	}
 }

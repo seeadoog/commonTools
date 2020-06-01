@@ -37,6 +37,7 @@ var funcs = map[string]ValidateFunc{
 	"defaultVal": NewDefaultVal,
 	"replaceKey": NewReplaceKey,
 	"enums":      NewEnums,
+	"enum":      NewEnums,
 	"pattern":    NewPattern,
 }
 
@@ -101,7 +102,7 @@ func NewProp(i interface{}) (Validator, error) {
 			continue
 		}
 		if funcs[key] == nil {
-			return nil, fmt.Errorf("%s is not known validator", key)
+			return nil, fmt.Errorf("%s is unknown validator", key)
 		}
 		vad, err := funcs[key](val,p)
 		if err != nil {
