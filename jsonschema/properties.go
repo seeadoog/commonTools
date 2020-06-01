@@ -29,18 +29,24 @@ func (p *Properties2) Validate(path string, value interface{}, errs *[]Error) {
 			}
 			pv.Validate(appendString(path,".",k),v,errs)
 		}
+
 		for key, val := range p.constVals {
 			m[key] = val.Val
 		}
-		for key, val := range p.replaceKeys {
-			if mv,ok:= m[key];!ok{
-				m[string(val)] = mv
 
-			}
-		}
 		for key, val := range p.defaultVals {
 			if _,ok:=m[key];!ok{
 				m[key] = val.Val
+			}
+		}
+		for key, rpk := range p.replaceKeys {
+			if mv,ok:= m[key];ok{
+				_,exist:=m[string(rpk)]
+				if exist{ // 如果要替换的key 已经存在，不替换
+					continue
+				}
+				m[string(rpk)] = mv
+
 			}
 		}
 

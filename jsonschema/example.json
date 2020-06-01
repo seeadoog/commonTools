@@ -11,7 +11,8 @@
           "type": "number",
           "maximum": 100,
           "minimum": 0,
-          "defaultVal": 3
+          "defaultVal": 3,
+          "replaceKey": "key2_p"
         },
         "status": {
           "type": "number",
