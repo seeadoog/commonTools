@@ -209,26 +209,6 @@ func NewDependencies(i interface{},parent Validator)(Validator,error){
 	return vad, nil
 }
 
-type Equal struct {
-	v interface{}
-}
-
-func (e Equal) Validate(path string, value interface{}, errs *[]Error) {
-	if e.v == value{
-		return
-	}
-	*errs = append(*errs,Error{
-		Path: path,
-		Info: fmt.Sprintf("value must == %v",e.v),
-	})
-}
-
-func NewEqual(i interface{},parent Validator)(Validator,error){
-	return Equal{
-		v: i,
-	},nil
-}
-
 /*
 {
 	"keyMatch":{
@@ -264,4 +244,79 @@ func NewKeyMatch(i interface{},parent Validator)(Validator,error){
 		return nil,fmt.Errorf("value of keyMatch must be map[string]interface{} :%v",i)
 	}
 	return KeyMatch(m),nil
+}
+
+/*
+{
+	"switch":{
+		"key":"key1",
+		"case":{
+			"v1":{},
+			"v2":{}
+		},
+		"default":{
+
+		}
+	}
+}
+ */
+type Switch struct {
+	Switch string
+	Case map[string]Validator
+	Default Validator
+}
+
+func (s Switch) Validate(path string, value interface{}, errs *[]Error) {
+	m,ok:=value.(map[string]interface{})
+	if !ok{
+		if s.Default != nil{
+			s.Default.Validate(path,value,errs)
+		}
+		return
+	}
+	for cas, validator := range s.Case {
+		if cas ==String(m[s.Switch]){
+			validator.Validate(path,value,errs)
+			return
+		}
+	}
+	if s.Default != nil{
+		s.Default.Validate(path,value,errs)
+	}
+}
+
+func NewSwitch(i interface{},parent Validator)(Validator,error){
+	m,ok:=i.(map[string]interface{})
+	if !ok{
+		return nil, fmt.Errorf("value of Switch must be map :%v", i)
+	}
+
+	swth,ok:=m["key"].(string)
+	if !ok{
+		return nil, fmt.Errorf("switch must be string:%v",i)
+	}
+	s:=&Switch{
+		Switch: swth,
+		Case: map[string]Validator{},
+	}
+	cases,ok:=m["cases"].(map[string]interface{})
+	if !ok{
+		return nil, fmt.Errorf("cases must be map:%v",i)
+	}
+	for key, val := range cases {
+		vad,err:=NewProp(val)
+		if err != nil{
+			return nil, err
+		}
+		s.Case[key] = vad
+	}
+	def:=m["default"]
+	if def != nil{
+		defv,err:=NewProp(def)
+		if err != nil{
+			return nil, err
+		}
+		s.Default = defv
+	}
+	return s, nil
 }

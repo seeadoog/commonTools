@@ -54,30 +54,44 @@ func (t Type)Validate(path string,value interface{},errs *[]Error){
 type MaxLength int
 
 func (l MaxLength)Validate(path string,value interface{},errs *[]Error){
-	str,ok:=value.(string)
-	if !ok{
-		return
+
+	switch value.(type) {
+	case string:
+		if len(value.(string)) > int(l){
+			*errs = append(*errs,Error{
+				Path: path,
+				Info: "length must be <= "+strconv.Itoa(int(l)),
+			})
+		}
+	case []interface{}:
+		if len(value.([]interface{})) >int(l){
+			*errs = append(*errs,Error{
+				Path: path,
+				Info: "length must be <= "+strconv.Itoa(int(l)),
+			})
+		}
 	}
-	if len(str) > int(l){
-		*errs = append(*errs,Error{
-			Path: path,
-			Info: "length must be <= "+strconv.Itoa(int(l)),
-		})
-	}
+
 }
 
 type MinLength int
 
 func (l MinLength)Validate(path string,value interface{},errs *[]Error){
-	str,ok:=value.(string)
-	if !ok{
-		return
-	}
-	if len(str) < int(l){
-		*errs = append(*errs,Error{
-			Path: path,
-			Info: "length must be >= "+strconv.Itoa(int(l)),
-		})
+	switch value.(type) {
+	case string:
+		if len(value.(string)) < int(l){
+			*errs = append(*errs,Error{
+				Path: path,
+				Info: "length must be >= "+strconv.Itoa(int(l)),
+			})
+		}
+	case []interface{}:
+		if len(value.([]interface{})) <int(l){
+			*errs = append(*errs,Error{
+				Path: path,
+				Info: "length must be >= "+strconv.Itoa(int(l)),
+			})
+		}
 	}
 }
 
@@ -146,4 +160,26 @@ func (r Required) Validate(path string, value interface{}, errs *[]Error) {
 	}
 }
 
-
+//// 限定数组的长度
+//type Length int
+//
+//func (l Length) Validate(path string, value interface{}, errs *[]Error) {
+//	arr,ok:=value.([]interface{})
+//	if !ok{
+//		return
+//	}
+//	if len(arr)>int(l){
+//		*errs = append(*errs,Error{
+//			Path: path,
+//			Info: appendString("length must be length than ",strconv.Itoa(int(l))),
+//		})
+//	}
+//}
+//
+//func NewLength(i interface{},parent Validator)(Validator,error){
+//	it,ok:=i.(float64)
+//	if !ok{
+//		return nil,fmt.Errorf("value of 'length' must be integer:%v",i)
+//	}
+//	return Length(it),nil
+//}

@@ -14,10 +14,10 @@ func init() {
 	RegisterValidator("not", NewNot)
 	RegisterValidator("allOf", NewAllOf)
 	RegisterValidator("dependencies", NewDependencies)
-	RegisterValidator("equal", NewEqual)
 	RegisterValidator("keyMatch", NewKeyMatch)
 	RegisterValidator("setVal", NewSetVal)
 	RegisterValidator("script",NewScript)
+	RegisterValidator("switch",NewSwitch)
 
 }
 // 忽略的校验器

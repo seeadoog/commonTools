@@ -63,7 +63,7 @@ func TestExapmle(t *testing.T){
 	var o interface{}
 	js:=`
 		{
-			"key1":"1",
+			"key1":"cadg",
 			"status":4,
 			"data":{
 				"key1":"dd"

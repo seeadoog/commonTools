@@ -2,6 +2,29 @@
   "type": "object",
   "allOf": [
     {
+      "if": {
+        "required": ["key1"]
+      },
+      "then": {
+        "required": ["status","key2"]
+      },
+      "else": {
+        "required": ["key3"]
+      },
+      "switch": {
+          "key": "key1",
+          "cases": {
+            "cak": {
+              "required": ["cak_re"]
+            },
+            "cad": {
+              "required": ["cad_re"]
+            }
+          },
+          "default": {
+              "required": ["default"]
+          }
+      },
       "properties": {
         "key1": {
           "type": "string",
@@ -17,6 +40,9 @@
         "status": {
           "type": "number",
           "enums": [0,1,2,3]
+        },
+        "key3": {
+          "type": "string"
         },
         "data": {
           "type": "object",
@@ -46,7 +72,8 @@
         {
           "for": "k,v in data",
           "do": "rst=append(rst,k,'=',v,';')"
-        }
+        },
+        "delctx('k','v')"
       ]
     }
   ]
