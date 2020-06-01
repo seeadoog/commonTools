@@ -5,6 +5,54 @@ import (
 	"strconv"
 )
 
+type Properties2 struct {
+	properties map[string]Validator
+	constVals map[string]*ConstVal
+	defaultVals map[string]*DefaultVal
+	replaceKeys map[string]ReplaceKey
+
+}
+
+func (p *Properties2) Validate(path string, value interface{}, errs *[]Error) {
+	if value == nil{
+		return
+	}
+	if m,ok:=value.(map[string]interface{});ok {
+		for k, v := range m {
+			pv:=p.properties[k]
+			if pv == nil{
+				*errs = append(*errs,Error{
+					Path: appendString(path,".",k),
+					Info: "unknown field",
+				})
+				continue
+			}
+			pv.Validate(appendString(path,".",k),v,errs)
+		}
+		for key, val := range p.constVals {
+			m[key] = val.Val
+		}
+		for key, val := range p.replaceKeys {
+			if mv,ok:= m[key];!ok{
+				m[string(val)] = mv
+
+			}
+		}
+		for key, val := range p.defaultVals {
+			if _,ok:=m[key];!ok{
+				m[key] = val.Val
+			}
+		}
+
+	}
+	//else{
+	//	*errs = append(*errs,Error{
+	//		Path: path,
+	//		Info: "type is not object",
+	//	})
+	//}
+}
+
 type Properties map[string]Validator
 
 func (p Properties) Validate(path string, value interface{}, errs *[]Error) {

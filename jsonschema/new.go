@@ -4,7 +4,7 @@ import "fmt"
 
 func init() {
 	// 这些显示放在funcs 里面时，不让编译通过，透。。。
-	RegisterValidator("properties", NewProperties)
+	RegisterValidator("properties", NewProperties2)
 	RegisterValidator("items", NewItems)
 	RegisterValidator("anyOf", NewAnyOf)
 	RegisterValidator("if", NewIf)
@@ -132,6 +132,47 @@ func NewProperties(i interface{},parent Validator) (Validator, error) {
 
 }
 
+func NewProperties2(i interface{},parent Validator) (Validator, error) {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("cannot create properties with not object type: %v", i)
+	}
+	p := &Properties2{
+		properties: map[string]Validator{},
+		replaceKeys: map[string]ReplaceKey{},
+		constVals: map[string]*ConstVal{},
+		defaultVals: map[string]*DefaultVal{},
+	}
+	for key, val := range m {
+		vad, err := NewProp(val)
+		if err != nil {
+			return nil, err
+		}
+		p.properties[key] = vad
+	}
+
+	for key, val := range p.properties {
+		prop,ok:=val.(ArrProp)
+		if !ok{
+			continue
+		}
+		constVal,ok:=prop.Get("constVal").(*ConstVal)
+		if ok{
+			p.constVals[key] =constVal
+		}
+		defaultVal,ok:=prop.Get("defaultVal").(*DefaultVal)
+		if ok{
+			p.defaultVals[key] = defaultVal
+		}
+		replaceKey,ok:=prop.Get("replaceKey").(ReplaceKey)
+		if ok{
+			p.replaceKeys[key] = replaceKey
+		}
+	}
+
+	return p, nil
+
+}
 func NewItems(i interface{},parent Validator) (Validator, error) {
 	m, ok := i.(map[string]interface{})
 	if !ok {

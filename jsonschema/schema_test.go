@@ -1,10 +1,8 @@
 package jsonschema
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/qri-io/jsonschema"
 	"testing"
 )
 func newType(v string)Validator{
@@ -73,29 +71,29 @@ func TestCreateNew(t *testing.T){
 	fmt.Println(iv)
 }
 
-func TestCreateNew2(t *testing.T){
-
-	sc:=&jsonschema.Schema{}
-	if err:=json.Unmarshal(schema,sc);err != nil{
-		panic(err)
-	}
-
-	iv:=map[string]interface{}{
-		"name":"biaoge",
-		"any":"dd",
-		"key1":"sdfsdf",
-		"key2":"dfds",
-		"son":map[string]interface{}{
-			"age":float64(100),
-		},
-	}
-	for i:=0;i<50000;i++{
-		//var errs = []Error{}
-		sc.Validate(context.Background(),iv)
-		//fmt.Println(errs)
-		//fmt.Println(st.Errs)
-	}
-}
+//func TestCreateNew2(t *testing.T){
+//
+//	sc:=&jsonschema.Schema{}
+//	if err:=json.Unmarshal(schema,sc);err != nil{
+//		panic(err)
+//	}
+//
+//	iv:=map[string]interface{}{
+//		"name":"biaoge",
+//		"any":"dd",
+//		"key1":"sdfsdf",
+//		"key2":"dfds",
+//		"son":map[string]interface{}{
+//			"age":float64(100),
+//		},
+//	}
+//	for i:=0;i<50000;i++{
+//		//var errs = []Error{}
+//		sc.Validate(context.Background(),iv)
+//		//fmt.Println(errs)
+//		//fmt.Println(st.Errs)
+//	}
+//}
 
 var 	schema =[]byte(`
 {

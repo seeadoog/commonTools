@@ -10,7 +10,8 @@
         "key2": {
           "type": "number",
           "maximum": 100,
-          "minimum": 0
+          "minimum": 0,
+          "defaultVal": 3
         },
         "status": {
           "type": "number",
