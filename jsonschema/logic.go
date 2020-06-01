@@ -55,7 +55,7 @@ func (i If) Validate(path string, value interface{}, errs *[]Error) {
 		if i.parent!= nil{
 			elsev,ok:=i.parent.Get("else").(Else)
 			if ok{
-				elsev.Validate(path,value,errs)
+				elsev.v.Validate(path,value,errs)
 			}
 		}
 	}
