@@ -23,12 +23,7 @@ func TestRaw(t *testing.T){
 			"sdf":Prop{
 
 			},
-			"sons":Prop{
-				"type":Type("array"),
-				"items":Items{
-					"type":Type("string"),
-				},
-			},
+
 		},
 	}
 	var errs = []Error{}

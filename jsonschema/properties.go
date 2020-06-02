@@ -5,12 +5,19 @@ import (
 	"strconv"
 )
 // 性能提升
+
+func init(){
+	ShowCompletePath = false
+}
+
 type Properties2 struct {
 	properties map[string]Validator
 	constVals map[string]*ConstVal
 	defaultVals map[string]*DefaultVal
 	replaceKeys map[string]ReplaceKey
 }
+
+var ShowCompletePath bool
 
 func (p *Properties2) Validate(path string, value interface{}, errs *[]Error) {
 	if value == nil{
@@ -26,7 +33,12 @@ func (p *Properties2) Validate(path string, value interface{}, errs *[]Error) {
 				})
 				continue
 			}
-			pv.Validate(appendString(path,".",k),v,errs)
+			if ShowCompletePath{
+				pv.Validate(appendString(path,".",k),v,errs)
+
+			}else{
+				pv.Validate(k,v,errs)
+			}
 		}
 
 		for key, val := range p.constVals {
@@ -74,7 +86,10 @@ func (p Properties) Validate(path string, value interface{}, errs *[]Error) {
 				})
 				continue
 			}
+			// p.set(path)
+			//p.next()
 			pv.Validate(appendString(path,".",k),v,errs)
+			//p.back()
 		}
 		//return
 
@@ -133,7 +148,7 @@ func (p Prop)Get(key string)Validator{
 }
 
 
-type Items map[string]Validator
+type Items ArrProp
 
 func (i Items) Validate(path string, value interface{}, errs *[]Error) {
 	if value == nil{
@@ -145,7 +160,9 @@ func (i Items) Validate(path string, value interface{}, errs *[]Error) {
 	}
 	for idx, item := range arr {
 		for _, validator := range i {
-			validator.Validate(appendString(path,"[",strconv.Itoa(idx),"]"),item,errs)
+			if validator.Val != nil{
+				validator.Val.Validate(appendString(path,"[",strconv.Itoa(idx),"]"),item,errs)
+			}
 		}
 	}
 }

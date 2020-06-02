@@ -26,6 +26,10 @@ var ignoreKeys = map[string]int{
 	"comment":1,
 }
 
+func AddIgnoreKeys(key string){
+	ignoreKeys[key] = 1
+}
+
 var funcs = map[string]ValidateFunc{
 	"type":       NewType,
 	"maxLength":  NewMaxLen,
@@ -106,7 +110,7 @@ func NewProp(i interface{}) (Validator, error) {
 		}
 		vad, err := funcs[key](val,p)
 		if err != nil {
-			return nil, err
+			return nil,fmt.Errorf("create prop error:key=%s,err=%w",key, err)
 		}
 		//p[key] = vad
 		p[idx] =  PropItem{Key: key, Val: vad}
@@ -179,15 +183,11 @@ func NewItems(i interface{},parent Validator) (Validator, error) {
 	if !ok {
 		return nil, fmt.Errorf("cannot create items with not object type: %v", i)
 	}
-	p := Items{}
-	for key, val := range m {
-		vad, err := NewProp(val)
-		if err != nil {
-			return nil, err
-		}
-		p[key] = vad
+	p ,err:= NewProp(m)
+	if err != nil{
+		return nil,err
 	}
-	return p, nil
+	return p.(ArrProp), nil
 }
 
 func NewRequired(i interface{},parent Validator) (Validator, error) {

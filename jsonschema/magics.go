@@ -55,6 +55,7 @@ func NewReplaceKey(i interface{},parent Validator) (Validator, error) {
 	}
 }
  */
+
 type SetVal map[*JsonPathCompiled]Value
 
 func (s SetVal) Validate(path string, value interface{}, errs *[]Error) {

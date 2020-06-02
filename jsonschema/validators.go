@@ -26,18 +26,18 @@ func (t Type)Validate(path string,value interface{},errs *[]Error){
 				Info: "type must be string",
 			})
 		}
-	case "boolean","bool":
-		if _,ok:=value.(bool);!ok{
-			*errs = append(*errs,Error{
-				Path: path,
-				Info: "type must be boolean",
-			})
-		}
 	case "number","integer":
 		if _,ok:=value.(float64);!ok{
 			*errs = append(*errs,Error{
 				Path: path,
 				Info: "type must be number",
+			})
+		}
+	case "boolean","bool":
+		if _,ok:=value.(bool);!ok{
+			*errs = append(*errs,Error{
+				Path: path,
+				Info: "type must be boolean",
 			})
 		}
 	case "array":
