@@ -166,7 +166,17 @@ func (i Items) Validate(path string, value interface{}, errs *[]Error) {
 		}
 	}
 }
-
+func NewItems(i interface{},parent Validator) (Validator, error) {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("cannot create items with not object type: %v", i)
+	}
+	p ,err:= NewProp(m)
+	if err != nil{
+		return nil,err
+	}
+	return Items(p.(ArrProp)), nil
+}
 type PropItem struct {
 	Key string
 	Val Validator

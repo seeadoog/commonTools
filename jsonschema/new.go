@@ -178,17 +178,7 @@ func NewProperties2(i interface{},parent Validator) (Validator, error) {
 	return p, nil
 
 }
-func NewItems(i interface{},parent Validator) (Validator, error) {
-	m, ok := i.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("cannot create items with not object type: %v", i)
-	}
-	p ,err:= NewProp(m)
-	if err != nil{
-		return nil,err
-	}
-	return p.(ArrProp), nil
-}
+
 
 func NewRequired(i interface{},parent Validator) (Validator, error) {
 	arr, ok := i.([]interface{})
