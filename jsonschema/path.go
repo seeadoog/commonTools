@@ -7,6 +7,13 @@ type path struct {
 	depth int
 }
 
+func newPath()*path{
+	return &path{
+		keys: make([]string,4),
+
+	}
+}
+
 func (p *path)Set(path string){
 	if p.depth >= len(p.keys){
 		old:=p.keys
@@ -20,17 +27,15 @@ func (p *path)Set(path string){
 
 func (p *path)String()string{
 	bf:=bytes.Buffer{}
-	for i:=0;i<p.depth;i++{
+	for i:=0;i<=p.depth;i++{
 		 bf.WriteString(p.keys[i])
 		 bf.WriteString(".")
-	}
-	if len(p.keys)>p.depth{
-		bf.WriteString(p.keys[p.depth])
 	}
 	return bf.String()
 }
 
-func (p *path)Next(){
+func (p *path)Next(path string){
+	p.Set(path)
 	p.depth ++
 }
 

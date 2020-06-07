@@ -120,22 +120,6 @@ func NewProp(i interface{}) (Validator, error) {
 	return p, nil
 }
 
-func NewProperties(i interface{},parent Validator) (Validator, error) {
-	m, ok := i.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("cannot create properties with not object type: %v", i)
-	}
-	p := Properties{}
-	for key, val := range m {
-		vad, err := NewProp(val)
-		if err != nil {
-			return nil, err
-		}
-		p[key] = vad
-	}
-	return p, nil
-
-}
 
 func NewProperties2(i interface{},parent Validator) (Validator, error) {
 	m, ok := i.(map[string]interface{})

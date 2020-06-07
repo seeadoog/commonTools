@@ -8,36 +8,6 @@ import (
 func newType(v string)Validator{
 	return Type(v)
 }
-func TestRaw(t *testing.T){
-	f:=Prop{
-		"type":Type("object"),
-		"properties":Properties{
-			"name":Prop{
-				"type":Type("string"),
-				"maxlength":MaxLength(2),
-				"enums":Enums{"ets","dd"},
-			},
-			"age":Prop{
-				"type":Type("integer"),
-			},
-			"sdf":Prop{
-
-			},
-
-		},
-	}
-	var errs = []Error{}
-	i:=map[string]interface{}{
-		"name":"etst",
-		"age":"4",
-		"fs":3,
-		"sons":[]interface{}{1,2,3},
-	}
-	f.Validate("$",i,&errs)
-	fmt.Println(errs)
-}
-
-
 
 func TestCreateNew(t *testing.T){
 
@@ -74,8 +44,8 @@ func TestCreateNew(t *testing.T){
 	}
 	fmt.Println(r,iv)
 
-	var a  interface{} = 1
-	var b float64 = 1
+	//var a  interface{} = 1
+	//var b float64 = 1
 	//fmt.Println(reflect.DeepEqual(a,b))
 }
 
