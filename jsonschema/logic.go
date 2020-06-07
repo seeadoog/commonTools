@@ -293,7 +293,7 @@ func NewSwitch(i interface{},parent Validator)(Validator,error){
 
 	swth,ok:=m["key"].(string)
 	if !ok{
-		return nil, fmt.Errorf("switch must be string:%v",i)
+		return nil, fmt.Errorf("switch key must be string:%v",i)
 	}
 	s:=&Switch{
 		Switch: swth,

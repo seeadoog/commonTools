@@ -2,6 +2,7 @@ package jsonschema
 
 import (
 	"fmt"
+	"reflect"
 	"strconv"
 )
 
@@ -14,6 +15,17 @@ func (t Type)Validate(path string,value interface{},errs *[]Error){
 	switch t {
 	case "object":
 		if _,ok:=value.(map[string]interface{});!ok{
+			rt:=reflect.ValueOf(value)
+			if rt.Kind() == reflect.Struct{
+				return
+			}
+			if rt.Kind() == reflect.Ptr{
+				if !rt.IsNil(){
+					if rt.Elem().Kind() == reflect.Struct{
+						return
+					}
+				}
+			}
 			*errs = append(*errs,Error{
 				Path: path,
 				Info: "type must be object",
@@ -28,6 +40,11 @@ func (t Type)Validate(path string,value interface{},errs *[]Error){
 		}
 	case "number","integer":
 		if _,ok:=value.(float64);!ok{
+			rt:=reflect.TypeOf(value)
+			switch rt.Kind() {
+			case reflect.Int,reflect.Int16,reflect.Int8,reflect.Int32,reflect.Int64,reflect.Uint8,reflect.Uint16,reflect.Uint32,reflect.Uint64,reflect.Uint,reflect.Float32,reflect.Float64:
+				return
+			}
 			*errs = append(*errs,Error{
 				Path: path,
 				Info: "type must be number",
@@ -134,6 +151,12 @@ func (enums Enums) Validate(path string, value interface{}, errs *[]Error) {
 	}
 	for _, e := range enums {
 		if e == value{
+			return
+		}
+	}
+
+	for _,e:= range enums{
+		if Equal(e,value){
 			return
 		}
 	}

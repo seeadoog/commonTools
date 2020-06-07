@@ -57,13 +57,26 @@ func TestCreateNew(t *testing.T){
 		//"fs":3,
 		//"sons":[]interface{}{1,2,3},
 	}
+	type req struct {
+		Name string `json:"name"`
+		Any string `json:"any"`
+	}
+	r:=&req{
+		Name: "jake2",
+
+	}
 	for i:=0;i<1;i++{
 		//var errs = []Error{}
 		errs:=f.Validate(iv)
+		errs =f.Validate(r)
 		fmt.Println(errs)
 
 	}
-	fmt.Println(iv)
+	fmt.Println(r,iv)
+
+	var a  interface{} = 1
+	var b float64 = 1
+	//fmt.Println(reflect.DeepEqual(a,b))
 }
 
 //func TestCreateNew2(t *testing.T){
@@ -146,7 +159,8 @@ var 	schema =[]byte(`
 			"pattern":"",
 			"not":{"enums":["face"]},
 			"enums":["jake","face"],
-			"replaceKey":"fname"
+			"replaceKey":"fname",
+			"constVal":"gt"
 		},
 		"name2":{
 			"type":"string",

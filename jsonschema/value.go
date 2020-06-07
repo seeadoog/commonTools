@@ -1,21 +1,19 @@
 package jsonschema
 
-import (
-)
+import ()
 
 var valueFuncs = map[string]Func{
-	"append":funcAppend,
-	"add":funcAdd,
+	"append": funcAppend,
+	"add":    funcAdd,
 }
 
-func SetFunc(name string,fun Func){
+func SetFunc(name string, fun Func) {
 	valueFuncs[name] = fun
 }
 
-
 type Context map[string]interface{}
 type Value interface {
-	Get(ctx Context)interface{}
+	Get(ctx Context) interface{}
 }
 
 type Const struct {
@@ -31,79 +29,64 @@ type Var struct {
 }
 
 func (v Var) Get(ctx Context) interface{} {
-	 val,err:=v.Key.Get(map[string]interface{}(ctx))
-	 if err != nil{
-	 	return nil
-	 }
-	 return val
+	val, err := v.Key.Get(map[string]interface{}(ctx))
+	if err != nil {
+		return nil
+	}
+	return val
 }
-
 
 type VarFunc struct {
 	funName string
-	args []Value
+	args    []Value
 }
 
 func (v VarFunc) Get(ctx Context) interface{} {
-	fun:=valueFuncs[v.funName]
-	if fun == nil{
+	fun := valueFuncs[v.funName]
+	if fun == nil {
 		return nil
 	}
-	return fun(ctx,v.args...)
+	return fun(ctx, v.args...)
 
 }
 
-type Func func(ctx Context,args ...Value)interface{}
+type Func func(ctx Context, args ...Value) interface{}
 
-
-
-
-
-
-
-func parseValue(i interface{})(Value,error){
+func parseValue(i interface{}) (Value, error) {
 	switch i.(type) {
 	case map[string]interface{}:
-		m:=i.(map[string]interface{})
-		from:=String(m["from"])
+		m := i.(map[string]interface{})
+		funName := String(m["func"])
 		//from func
-		if len(from)>2 && from[0]=='(' && from[len(from)-1]==')'{
-			funName:=from[1:len(from)-1]
-			fv:=&VarFunc{
-				funName: funName,
-			}
-			args,ok:=m["args"].([]interface{})
-			if !ok{
-				return fv,nil
-			}
-			argsv:=make([]Value, len(args))
-			for idx, arg := range args {
-				argv,err:=parseValue(arg)
-				if err != nil{
-					return nil, err
-				}
-				argsv[idx] = argv
-			}
-			fv.args = argsv
-			return fv,nil
+		fv := &VarFunc{
+			funName: funName,
 		}
-		jp,err:=parseJpathCompiled(from)
-		if err !=nil{
-			return nil, err
+		args, ok := m["args"].([]interface{})
+		if !ok {
+			return fv, nil
 		}
-		return &Var{Key: jp},nil
-
-	case string:
-		str:=i.(string)
-		if len(str)>3 && str[0]=='$' && str[1]=='{' && str[len(str)-1]=='}'{
-			jp,err:=parseJpathCompiled(str[2:len(str)-1])
-			if err !=nil{
+		argsv := make([]Value, len(args))
+		for idx, arg := range args {
+			argv, err := parseValue(arg)
+			if err != nil {
 				return nil, err
 			}
-			return Var{Key: jp,},nil
+			argsv[idx] = argv
 		}
-		return Const{Val: i,},nil
+		fv.args = argsv
+		return fv, nil
+
+	case string:
+		str := i.(string)
+		if len(str) > 3 && str[0] == '$' && str[1] == '{' && str[len(str)-1] == '}' {
+			jp, err := parseJpathCompiled(str[2 : len(str)-1])
+			if err != nil {
+				return nil, err
+			}
+			return Var{Key: jp}, nil
+		}
+		return Const{Val: i}, nil
 	default:
-		return &Const{Val: i,},nil
+		return &Const{Val: i}, nil
 	}
 }

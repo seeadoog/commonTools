@@ -49,9 +49,33 @@ func NewReplaceKey(i interface{},parent Validator) (Validator, error) {
 		"key2":"val2",
 		"key3":"${key1}",
 		"key4":{
-			"from":"(append)",
-			"args":["${key1}","${key2}",{"from":"(add)","args":[1,2]}]
+			"func":"append",
+			"args":["${key1}","${key2}",{"func":"add","args":[1,2]}]
 		},
+	}
+}
+{
+	"if":{
+		"op":"eq",
+		"l":"",
+		"r":""
+	}
+	"then":{
+
+	},
+
+	"else":{
+
+	},
+	"and":[
+		{
+			"if":{}
+		}
+	],
+	"set":{
+		"k1":"",
+
+
 	}
 }
  */

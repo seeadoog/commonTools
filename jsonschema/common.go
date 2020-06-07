@@ -50,3 +50,8 @@ func Number(v interface{})float64{
 	}
 	return 0
 }
+
+
+func Equal(a,b interface{})bool{
+	return String(a) ==String(b)
+}
