@@ -35,12 +35,9 @@ func (p *Properties2) Validate(path string, value interface{}, errs *[]Error) {
 				})
 				continue
 			}
-			if ShowCompletePath {
-				pv.Validate(appendString(path, ".", k), v, errs)
 
-			} else {
-				pv.Validate(k, v, errs)
-			}
+			pv.Validate(appendString(path, ".", k), v, errs)
+
 		}
 
 		for key, val := range p.constVals {
