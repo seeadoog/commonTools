@@ -10,73 +10,96 @@ func newType(v string)Validator{
 }
 
 var schema2 = []byte(`
-	
-{
-	"type":"object",
-"properties":{
-		"name":{
-			"type":"string",
-            "maxLength":5,
-			"minLength":3,
-			"pattern":"",
-			"not":{"enums":["face"]},
-			"enums":["jake","face"]
-		
-		},
-		"name2":{
-			"type":"string",
-            "maxLength":5,
-			"minLength":3,
-			"enums":["jake","face"]
-		},
-		"any":{
-			"anyOf":[
-                 {"type":"string"},
-				 {"type":"integer"}
-             ]
-		},
-		"name3":{
-			"type":"string",
-            "maxLength":5,
-			"minLength":3,
-			"enums":["jake","face"]
-		},
-		"son":{
-			"type":"object",
-			"properties":{
-				"age":{
-					"type":"integer",
-					"maximum":100,
-					"minimum":0,
-					"defaultVal":15
-				},
-				"name":{
-					"type":"string",
-					"maxLength":10,
-					"defaultVal":"dajj"
-				}
-			}
-		},
-		"key1":{"type":"string"},
-		"key2":{"type":"string"}
-	}
-}
+	{
 
+  "type": "object",
+  "properties": {
+    "a": {
+      "type": "object",
+      "properties": {
+        "a1": {
+          "type": "string",
+          "maxLength": 5
+        },
+        "a2": {
+          "type": "string",
+          "maxLength": 5
+        },
+        "a3": {
+          "type": "string",
+          "maxLength": 5
+        },
+        "a4": {
+          "type": "string"
+        }
+      }
+    },
+    "b": {
+      "type": "object",
+      "properties": {
+        "a1": {
+          "type": "string",
+          "maxLength": 5
+        },
+        "a2": {
+          "type": "string"
+        },
+        "a3": {
+          "type": "string",
+          "maxLength": 5
+        },
+        "a4": {
+          "type": "string"
+        }
+      }
+    },
+    "c": {
+      "type": "object",
+      "properties": {
+        "a1": {
+          "type": "string",
+          "maxLength": 5
+        },
+        "a2": {
+          "type": "string"
+        },
+        "a3": {
+          "type": "string",
+          "maxLength": 5
+        },
+        "a4": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
 `)
 
 func TestCreateNew(t *testing.T){
-
+	ShowCompletePath = true
 	var f Schema
 	if err:=json.Unmarshal(schema2,&f);err != nil{
 		panic(err)
 	}
 	iv:=map[string]interface{}{
-		"name":"jake",
-		"any":"dd",
-		"key1":"sdfsdf",
-		"key2":"dfd4s",
-		"son":map[string]interface{}{
-			"age":float64(100),
+		"a":map[string]interface{}{
+			"a1":"1",
+			"a2":"1",
+			"a3":"1",
+			"a4":"1",
+		},
+		"b":map[string]interface{}{
+			"a1":"1",
+			"a2":"1",
+			"a3":"1",
+			"a4":"1",
+		},
+		"c":map[string]interface{}{
+			"a1":"1",
+			"a2":"1",
+			"a3":"1",
+			"a4":"1",
 		},
 		//"age":"4",
 		//"fs":3,
