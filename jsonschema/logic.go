@@ -6,7 +6,7 @@ import (
 
 type AnyOf []Validator
 
-func (a AnyOf) Validate(path string, value interface{}, errs *[]Error) {
+func (a AnyOf) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	allErrs:=[]Error{}
 	for _, validator := range a {
 		e:=[]Error{}
@@ -41,7 +41,7 @@ type If struct {
 	v Validator
 }
 
-func (i If) Validate(path string, value interface{}, errs *[]Error) {
+func (i If) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	ifErrs:=[]Error{}
 	i.v.Validate(path,value,&ifErrs)
 	if len(ifErrs)==0{
@@ -79,7 +79,7 @@ type Then struct {
 	v Validator
 }
 
-func (t Then) Validate(path string, value interface{}, errs *[]Error) {
+func (t Then) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	// then 不能主动调用
 }
 
@@ -87,7 +87,7 @@ type Else struct {
 	v Validator
 }
 
-func (e Else) Validate(path string, value interface{}, errs *[]Error) {
+func (e Else) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	//panic("implement me")
 }
 
@@ -115,13 +115,13 @@ type Not struct {
 	v Validator
 }
 
-func (n Not) Validate(path string, value interface{}, errs *[]Error) {
+func (n Not) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	ners:=[]Error{}
 	n.v.Validate(path,value,&ners)
 	//fmt.Println(ners,value)
 	if len(ners) ==0{
 		*errs = append(*errs,Error{
-			Path: path,
+			Path: path.String(),
 			Info: "is not valid",
 		})
 	}
@@ -137,7 +137,7 @@ func NewNot(i interface{},parent Validator)(Validator,error){
 
 type AllOf []Validator
 
-func (a AllOf) Validate(path string, value interface{}, errs *[]Error) {
+func (a AllOf) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	for _, validator := range a {
 		validator.Validate(path,value,errs)
 	}
@@ -161,7 +161,7 @@ func NewAllOf(i interface{},parent Validator)(Validator,error){
 
 type Dependencies map[string][]string
 
-func (d Dependencies) Validate(path string, value interface{}, errs *[]Error) {
+func (d Dependencies) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	m,ok:=value.(map[string]interface{})
 	if !ok{
 		return
@@ -174,7 +174,7 @@ func (d Dependencies) Validate(path string, value interface{}, errs *[]Error) {
 				_,ok = m[val]
 				if !ok{
 					*errs = append(*errs,Error{
-						Path: appendString(path,".",val),
+						Path: appendString(path.String(),".",val),
 						Info: "is required",
 					})
 				}
@@ -219,11 +219,11 @@ func NewDependencies(i interface{},parent Validator)(Validator,error){
 
 type KeyMatch map[string]interface{}
 
-func (k KeyMatch) Validate(path string, value interface{}, errs *[]Error) {
+func (k KeyMatch) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	m,ok:=value.(map[string]interface{})
 	if !ok{
 		*errs = append(*errs,Error{
-			Path: path,
+			Path: path.String(),
 			Info: "type is not object",
 		})
 	}
@@ -231,7 +231,7 @@ func (k KeyMatch) Validate(path string, value interface{}, errs *[]Error) {
 		target:=m[key]
 		if target != want {
 			*errs = append(*errs,Error{
-				Path: appendString(path,".",key),
+				Path: appendString(path.String(),".",key),
 				Info: fmt.Sprintf("value must be %v",want),
 			})
 		}
@@ -266,7 +266,7 @@ type Switch struct {
 	Default Validator
 }
 
-func (s Switch) Validate(path string, value interface{}, errs *[]Error) {
+func (s Switch) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	m,ok:=value.(map[string]interface{})
 	if !ok{
 		if s.Default != nil{

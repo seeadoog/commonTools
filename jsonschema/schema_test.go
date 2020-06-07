@@ -9,17 +9,72 @@ func newType(v string)Validator{
 	return Type(v)
 }
 
+var schema2 = []byte(`
+	
+{
+	"type":"object",
+"properties":{
+		"name":{
+			"type":"string",
+            "maxLength":5,
+			"minLength":3,
+			"pattern":"",
+			"not":{"enums":["face"]},
+			"enums":["jake","face"]
+		
+		},
+		"name2":{
+			"type":"string",
+            "maxLength":5,
+			"minLength":3,
+			"enums":["jake","face"]
+		},
+		"any":{
+			"anyOf":[
+                 {"type":"string"},
+				 {"type":"integer"}
+             ]
+		},
+		"name3":{
+			"type":"string",
+            "maxLength":5,
+			"minLength":3,
+			"enums":["jake","face"]
+		},
+		"son":{
+			"type":"object",
+			"properties":{
+				"age":{
+					"type":"integer",
+					"maximum":100,
+					"minimum":0,
+					"defaultVal":15
+				},
+				"name":{
+					"type":"string",
+					"maxLength":10,
+					"defaultVal":"dajj"
+				}
+			}
+		},
+		"key1":{"type":"string"},
+		"key2":{"type":"string"}
+	}
+}
+
+`)
+
 func TestCreateNew(t *testing.T){
 
 	var f Schema
-	if err:=json.Unmarshal(schema,&f);err != nil{
+	if err:=json.Unmarshal(schema2,&f);err != nil{
 		panic(err)
 	}
 	iv:=map[string]interface{}{
-		"name":"biaoge",
+		"name":"jake",
 		"any":"dd",
 		"key1":"sdfsdf",
-		"key2":"dfds",
+		"key2":"dfd4s",
 		"son":map[string]interface{}{
 			"age":float64(100),
 		},
@@ -35,14 +90,15 @@ func TestCreateNew(t *testing.T){
 		Name: "jake2",
 
 	}
-	for i:=0;i<1;i++{
+	var errs error
+	for i:=0;i<100000;i++{
 		//var errs = []Error{}
-		errs:=f.Validate(iv)
-		errs =f.Validate(r)
-		fmt.Println(errs)
+		errs=f.Validate(iv)
+		//errs =f.Validate(r)
+		//fmt.Println(errs)
 
 	}
-	fmt.Println(r,iv)
+	fmt.Println(r,iv,errs)
 
 	//var a  interface{} = 1
 	//var b float64 = 1

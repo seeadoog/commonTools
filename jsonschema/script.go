@@ -6,7 +6,7 @@ type Script struct {
 	script jsonscpt.Exp
 }
 
-func (s Script) Validate(path string, value interface{}, errs *[]Error) {
+func (s Script) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	m,ok:=value.(map[string]interface{})
 	if !ok{
 		return
@@ -15,7 +15,7 @@ func (s Script) Validate(path string, value interface{}, errs *[]Error) {
 	err:=s.script.Exec(ctx)
 	if err,ok:=jsonscpt.IsExitError(err);ok{
 		*errs = append(*errs,Error{
-			Path: path,
+			Path: path.String(),
 			Info: err.Message,
 		})
 	}

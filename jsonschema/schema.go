@@ -36,7 +36,9 @@ func (s *Schema)MarshalJSON()(b []byte,err error){
 
 func (s *Schema)Validate(i interface{})error{
 	errs:=[]Error{}
-	s.prop.Validate("$",i,&errs)
+	path:=newPathTree()
+	path.path = "$"
+	s.prop.Validate(path,i,&errs)
 	if len(errs) == 0{
 		return nil
 	}

@@ -6,7 +6,7 @@ type ConstVal struct {
 	Val interface{}
 }
 
-func (c ConstVal) Validate(path string, value interface{}, errs *[]Error) {
+func (c ConstVal) Validate(path *pathTree, value interface{}, errs *[]Error) {
 
 }
 
@@ -14,13 +14,13 @@ type DefaultVal struct {
 	Val interface{}
 }
 
-func (d DefaultVal) Validate(path string, value interface{}, errs *[]Error) {
+func (d DefaultVal) Validate(path *pathTree, value interface{}, errs *[]Error) {
 
 }
 
 type ReplaceKey string
 
-func (r ReplaceKey) Validate(path string, value interface{}, errs *[]Error) {
+func (r ReplaceKey) Validate(path *pathTree, value interface{}, errs *[]Error) {
 
 }
 
@@ -82,7 +82,7 @@ func NewReplaceKey(i interface{},parent Validator) (Validator, error) {
 
 type SetVal map[*JsonPathCompiled]Value
 
-func (s SetVal) Validate(path string, value interface{}, errs *[]Error) {
+func (s SetVal) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	m,ok:=value.(map[string]interface{})
 	if !ok{
 		return

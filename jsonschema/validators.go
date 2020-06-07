@@ -8,7 +8,7 @@ import (
 
 type Type string
 
-func (t Type)Validate(path string,value interface{},errs *[]Error){
+func (t Type)Validate(path *pathTree,value interface{},errs *[]Error){
 	if value == nil{
 		return
 	}
@@ -27,14 +27,14 @@ func (t Type)Validate(path string,value interface{},errs *[]Error){
 				}
 			}
 			*errs = append(*errs,Error{
-				Path: path,
+				Path: path.String(),
 				Info: "type must be object",
 			})
 		}
 	case "string":
 		if _,ok:=value.(string);!ok{
 			*errs = append(*errs,Error{
-				Path: path,
+				Path: path.String(),
 				Info: "type must be string",
 			})
 		}
@@ -46,21 +46,21 @@ func (t Type)Validate(path string,value interface{},errs *[]Error){
 				return
 			}
 			*errs = append(*errs,Error{
-				Path: path,
+				Path: path.String(),
 				Info: "type must be number",
 			})
 		}
 	case "boolean","bool":
 		if _,ok:=value.(bool);!ok{
 			*errs = append(*errs,Error{
-				Path: path,
+				Path: path.String(),
 				Info: "type must be boolean",
 			})
 		}
 	case "array":
 		if _,ok:=value.([]interface{});!ok{
 			*errs = append(*errs,Error{
-				Path: path,
+				Path: path.String(),
 				Info: "type must be array",
 			})
 		}
@@ -70,20 +70,20 @@ func (t Type)Validate(path string,value interface{},errs *[]Error){
 
 type MaxLength int
 
-func (l MaxLength)Validate(path string,value interface{},errs *[]Error){
+func (l MaxLength)Validate(path *pathTree,value interface{},errs *[]Error){
 
 	switch value.(type) {
 	case string:
 		if len(value.(string)) > int(l){
 			*errs = append(*errs,Error{
-				Path: path,
+				Path: path.String(),
 				Info: "length must be <= "+strconv.Itoa(int(l)),
 			})
 		}
 	case []interface{}:
 		if len(value.([]interface{})) >int(l){
 			*errs = append(*errs,Error{
-				Path: path,
+				Path: path.String(),
 				Info: "length must be <= "+strconv.Itoa(int(l)),
 			})
 		}
@@ -93,19 +93,19 @@ func (l MaxLength)Validate(path string,value interface{},errs *[]Error){
 
 type MinLength int
 
-func (l MinLength)Validate(path string,value interface{},errs *[]Error){
+func (l MinLength)Validate(path *pathTree,value interface{},errs *[]Error){
 	switch value.(type) {
 	case string:
 		if len(value.(string)) < int(l){
 			*errs = append(*errs,Error{
-				Path: path,
+				Path: path.String(),
 				Info: "length must be >= "+strconv.Itoa(int(l)),
 			})
 		}
 	case []interface{}:
 		if len(value.([]interface{})) <int(l){
 			*errs = append(*errs,Error{
-				Path: path,
+				Path: path.String(),
 				Info: "length must be >= "+strconv.Itoa(int(l)),
 			})
 		}
@@ -114,14 +114,14 @@ func (l MinLength)Validate(path string,value interface{},errs *[]Error){
 
 type Maximum float64
 
-func (m Maximum) Validate(path string, value interface{}, errs *[]Error) {
+func (m Maximum) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	val,ok:=value.(float64)
 	if !ok{
 		return
 	}
 	if val >float64(m){
 		*errs = append(*errs,Error{
-			Path: path,
+			Path: path.String(),
 			Info: appendString("value must be <=",strconv.FormatFloat(float64(m),'f',-1,64)),
 		})
 	}
@@ -129,14 +129,14 @@ func (m Maximum) Validate(path string, value interface{}, errs *[]Error) {
 
 type Minimum float64
 
-func (m Minimum) Validate(path string, value interface{}, errs *[]Error) {
+func (m Minimum) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	val,ok:=value.(float64)
 	if !ok{
 		return
 	}
 	if val<float64(m){
 		*errs = append(*errs,Error{
-			Path: path,
+			Path: path.String(),
 			Info: appendString("value must be >=",strconv.FormatFloat(float64(m),'f',-1,64)),
 		})
 	}
@@ -145,7 +145,7 @@ func (m Minimum) Validate(path string, value interface{}, errs *[]Error) {
 
 type Enums []interface{}
 
-func (enums Enums) Validate(path string, value interface{}, errs *[]Error) {
+func (enums Enums) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	if value == nil{
 		return
 	}
@@ -161,14 +161,14 @@ func (enums Enums) Validate(path string, value interface{}, errs *[]Error) {
 		}
 	}
 	*errs = append(*errs,Error{
-		Path: path,
+		Path: path.String(),
 		Info: fmt.Sprintf("must be one of %v",enums),
 	})
 }
 
 type Required []string
 
-func (r Required) Validate(path string, value interface{}, errs *[]Error) {
+func (r Required) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	m,ok:=value.(map[string]interface{})
 	if !ok{
 		return
@@ -176,7 +176,7 @@ func (r Required) Validate(path string, value interface{}, errs *[]Error) {
 	for _,key := range r {
 		if _,ok:=m[key];!ok{
 			*errs = append(*errs,Error{
-				Path: appendString(path,".",key),
+				Path: appendString(path.String(),".",key),
 				Info: "field is required",
 			})
 		}
@@ -186,7 +186,7 @@ func (r Required) Validate(path string, value interface{}, errs *[]Error) {
 //// 限定数组的长度
 //type Length int
 //
-//func (l Length) Validate(path string, value interface{}, errs *[]Error) {
+//func (l Length) Validate(path *pathTree, value interface{}, errs *[]Error) {
 //	arr,ok:=value.([]interface{})
 //	if !ok{
 //		return

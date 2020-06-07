@@ -9,14 +9,14 @@ type Pattern struct {
 	regexp *regexp.Regexp
 }
 
-func (p *Pattern) Validate(path string, value interface{}, errs *[]Error) {
+func (p *Pattern) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	str, ok := value.(string)
 	if !ok {
 		return
 	}
 	if !p.regexp.MatchString(str) {
 		*errs = append(*errs, Error{
-			Path: path,
+			Path: path.String(),
 			Info: appendString(str, "value does not match pattern"),
 		})
 	}

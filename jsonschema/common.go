@@ -12,13 +12,18 @@ type Error struct {
 }
 
 type Validator interface {
-	Validate(path string,value interface{},errs *[]Error)
+	Validate(path *pathTree,value interface{},errs *[]Error)
 }
 
 func appendString(s ...string)string{
 	sb:=strings.Builder{}
-	for _, str:= range s {
-		sb.WriteString(str)
+	n:=0
+	for i:=0;i< len(s);i++{
+		n+= len(s[i])
+	}
+	sb.Grow(n)
+	for i:=0;i< len(s);i++{
+		sb.WriteString(s[i])
 	}
 	return sb.String()
 }

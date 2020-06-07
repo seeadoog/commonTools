@@ -21,7 +21,7 @@ type Properties2 struct {
 
 var ShowCompletePath bool
 
-func (p *Properties2) Validate(path string, value interface{}, errs *[]Error) {
+func (p *Properties2) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	if value == nil {
 		return
 	}
@@ -30,17 +30,13 @@ func (p *Properties2) Validate(path string, value interface{}, errs *[]Error) {
 			pv := p.properties[k]
 			if pv == nil {
 				*errs = append(*errs, Error{
-					Path: appendString(path, ".", k),
+					Path: appendString(path.String(), ".", k),
 					Info: "unknown field",
 				})
 				continue
 			}
-			if ShowCompletePath {
-				pv.Validate(appendString(path, ".", k), v, errs)
-
-			} else {
-				pv.Validate(k, v, errs)
-			}
+			pv.Validate(path.AddChild(k), v, errs)
+			
 		}
 
 		for key, val := range p.constVals {
@@ -85,7 +81,7 @@ func (p *Properties2) Validate(path string, value interface{}, errs *[]Error) {
 				}
 				fv := rv.Field(i)
 				if fv.CanInterface() {
-					vad.Validate(propName, fv.Interface(), errs)
+					vad.Validate(path.AddChild(propName), fv.Interface(), errs)
 				}
 				// set constVal ,struct 类型无法知道目标值是否为空，无法设定默认值
 				var vv interface{} = nil
@@ -124,7 +120,7 @@ func (p *Properties2) Validate(path string, value interface{}, errs *[]Error) {
 
 type Items ArrProp
 
-func (i Items) Validate(path string, value interface{}, errs *[]Error) {
+func (i Items) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	if value == nil {
 		return
 	}
@@ -135,7 +131,7 @@ func (i Items) Validate(path string, value interface{}, errs *[]Error) {
 	for idx, item := range arr {
 		for _, validator := range i {
 			if validator.Val != nil {
-				validator.Val.Validate(appendString(path, "[", strconv.Itoa(idx), "]"), item, errs)
+				validator.Val.Validate(path.AddChild(appendString( "[", strconv.Itoa(idx), "]")), item, errs)
 			}
 		}
 	}
@@ -160,7 +156,7 @@ type PropItem struct {
 // 数组的for 比  map for快很多,在数据不大的情况下，for 也比 map get  快
 type ArrProp []PropItem
 
-func (a ArrProp) Validate(path string, value interface{}, errs *[]Error) {
+func (a ArrProp) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	for _, item := range a {
 		if item.Val == nil {
 			continue
@@ -179,7 +175,7 @@ func (a ArrProp) Get(key string) Validator {
 
 type FlexProperties map[string]Validator
 
-func (f FlexProperties) Validate(path string, value interface{}, errs *[]Error) {
+func (f FlexProperties) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	m, ok := value.(map[string]interface{})
 	if !ok {
 		return
@@ -189,7 +185,7 @@ func (f FlexProperties) Validate(path string, value interface{}, errs *[]Error) 
 		if vad == nil {
 			continue
 		}
-		f[key].Validate(appendString(path, ".", key), val, errs)
+		f[key].Validate(path.AddChild(key), val, errs)
 	}
 }
 
