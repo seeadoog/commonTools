@@ -42,6 +42,7 @@ func (s *Schema)Validate(i interface{})error{
 	if len(errs) == 0{
 		return nil
 	}
+	pool.Put(path)
 	return errors.New(errsToString(errs))
 }
 

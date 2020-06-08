@@ -3,6 +3,7 @@ package jsonschema
 import (
 	"bytes"
 	"strings"
+	"sync"
 )
 
 type path struct {
@@ -58,9 +59,15 @@ func (p *pathTree)reset(){
 	p.ci = 0
 	p.parent = nil
 }
-
+var pool sync.Pool
 func newPathTree()*pathTree{
-	return new(pathTree)
+	 t:=pool.Get()
+	 if t == nil{
+	 	return new(pathTree)
+	 }
+	 p:=t.(*pathTree)
+	 p.reset()
+	 return p
 }
 
 func (p *pathTree)AddChild(path string)*pathTree{
@@ -73,6 +80,14 @@ func (p *pathTree)AddChild(path string)*pathTree{
 		}
 		p.children = make([]*pathTree, length*2)
 		copy(p.children,old)
+	}
+	if p.children[p.ci]!=nil{
+		n:=p.children[p.ci]
+		n.path = path
+		n.parent = p
+		p.ci++
+		return n
+
 	}
 	n:=newPathTree()
 	n.parent = p
