@@ -13,7 +13,7 @@ func init() {
 	RegisterValidator("if", NewIf)
 	RegisterValidator("else", NewElse)
 	RegisterValidator("then", NewThen)
-	//RegisterValidator("flexProperties", NewFlexProperties)
+	RegisterValidator("flexProperties", NewFlexProperties)
 	RegisterValidator("not", NewNot)
 	RegisterValidator("allOf", NewAllOf)
 	RegisterValidator("dependencies", NewDependencies)
@@ -269,3 +269,41 @@ func NewProperties2(i interface{},path string,parent Validator) (Validator, erro
 
 }
 
+
+type FlexProperties struct {
+	Val map[string]Validator
+	Path string
+}
+
+func (f FlexProperties) Validate(c *ValidateCtx,value interface{}) {
+	m, ok := value.(map[string]interface{})
+	if !ok {
+		return
+	}
+	for key, val := range m {
+		vad := f.Val[key]
+		if vad == nil {
+			continue
+		}
+		vad.Validate(c, val)
+	}
+}
+
+// 宽松校验器，允许存在不在properties 中的值
+func NewFlexProperties(i interface{},path string, parent Validator) (Validator, error) {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("cannot create flexProperties with not object type: %v", i)
+	}
+	p := FlexProperties{
+		Val: map[string]Validator{},
+	}
+	for key, val := range m {
+		vad, err := NewProp(val,appendString(path,".",key))
+		if err != nil {
+			return nil, err
+		}
+		p.Val[key] = vad
+	}
+	return p, nil
+}

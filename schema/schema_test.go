@@ -1,8 +1,10 @@
 package schema
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/qri-io/jsonschema"
 	"testing"
 )
 
@@ -97,7 +99,7 @@ func TestCreateNew(t *testing.T){
 			"a1":"1",
 			"a2":"1",
 			"a3":"1",
-			"a4":1,
+			"a4":"5",
 		},
 		//"age":"4",
 		//"fs":3,
@@ -126,29 +128,42 @@ func TestCreateNew(t *testing.T){
 	//fmt.Println(reflect.DeepEqual(a,b))
 }
 
-//func TestCreateNew2(t *testing.T){
-//
-//	sc:=&jsonschema.Schema{}
-//	if err:=json.Unmarshal(schema,sc);err != nil{
-//		panic(err)
-//	}
-//
-//	iv:=map[string]interface{}{
-//		"name":"biaoge",
-//		"any":"dd",
-//		"key1":"sdfsdf",
-//		"key2":"dfds",
-//		"son":map[string]interface{}{
-//			"age":float64(100),
-//		},
-//	}
-//	for i:=0;i<50000;i++{
-//		//var errs = []Error{}
-//		sc.Validate(context.Background(),iv)
-//		//fmt.Println(errs)
-//		//fmt.Println(st.Errs)
-//	}
-//}
+func TestCreateNew2(t *testing.T){
+
+	sc:=&jsonschema.Schema{}
+	if err:=json.Unmarshal(schema,sc);err != nil{
+		panic(err)
+	}
+	iv:=map[string]interface{}{
+		"a":map[string]interface{}{
+			"a1":"23",
+			"a2":"1",
+			"a3":"1",
+			"a4":"1",
+		},
+		"b":map[string]interface{}{
+			"a1":"1",
+			"a2":"1",
+			"a3":"1",
+			"a4":"1",
+		},
+		"c":map[string]interface{}{
+			"a1":"1",
+			"a2":"1",
+			"a3":"1",
+			"a4":"5",
+		},
+		//"age":"4",
+		//"fs":3,
+		//"sons":[]interface{}{1,2,3},
+	}
+	for i:=0;i<100000;i++{
+		//var errs = []Error{}
+		sc.Validate(context.Background(),iv)
+		//fmt.Println(errs)
+		//fmt.Println(st.Errs)
+	}
+}
 
 var 	schema =[]byte(`
 {
