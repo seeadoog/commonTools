@@ -1,4 +1,4 @@
-package jsonschema
+package schema
 
 import (
 	"fmt"
@@ -10,20 +10,39 @@ type Error struct {
 	Path string
 	Info string
 }
-
-type Validator interface {
-	Validate(path *pathTree,value interface{},errs *[]Error)
+type ValidateCtx struct {
+	errors []Error
 }
+
+func (v *ValidateCtx)AddError(e Error){
+	v.errors = append(v.errors,e)
+}
+
+func (v *ValidateCtx)AddErrors(e ...Error){
+	for i, _ := range e {
+		v.AddError(e[i])
+	}
+}
+
+
+func (v *ValidateCtx)Clone()*ValidateCtx{
+	return &ValidateCtx{
+
+	}
+}
+type Validator interface {
+	Validate(c *ValidateCtx, value interface{})
+}
+
+
+type NewValidatorFunc func(i interface{},path string,parent Validator)(Validator,error)
+
+
 
 func appendString(s ...string)string{
 	sb:=strings.Builder{}
-	n:=0
-	for i:=0;i< len(s);i++{
-		n+= len(s[i])
-	}
-	sb.Grow(n)
-	for i:=0;i< len(s);i++{
-		sb.WriteString(s[i])
+	for _, str:= range s {
+		sb.WriteString(str)
 	}
 	return sb.String()
 }
@@ -60,5 +79,3 @@ func Number(v interface{})float64{
 func Equal(a,b interface{})bool{
 	return String(a) ==String(b)
 }
-
-

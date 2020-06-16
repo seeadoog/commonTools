@@ -21,22 +21,26 @@ type Properties2 struct {
 
 var ShowCompletePath bool
 
-func (p *Properties2) Validate(path string, value interface{}, errs *[]Error) {
+func (p *Properties2) Validate(c *ValidateCtx,value interface{}) {
 	if value == nil {
 		return
+	}
+	if c.subPath != ""{
+		c.cachePath = c.parentPath
+		c.parentPath = appendString(c.parentPath,".",c.subPath)
 	}
 	if m, ok := value.(map[string]interface{}); ok {
 		for k, v := range m {
 			pv := p.properties[k]
 			if pv == nil {
-				*errs = append(*errs, Error{
-					Path: appendString(path, ".", k),
+				c.AddError(&Error{
+					Path: appendString(c.parentPath,".",k),
 					Info: "unknown field",
 				})
 				continue
 			}
-
-			pv.Validate(appendString(path, ".", k), v, errs)
+			c.subPath = k
+			pv.Validate(c,v)
 
 		}
 
@@ -82,7 +86,9 @@ func (p *Properties2) Validate(path string, value interface{}, errs *[]Error) {
 				}
 				fv := rv.Field(i)
 				if fv.CanInterface() {
-					vad.Validate(propName, fv.Interface(), errs)
+					//vad.Validate(propName, fv.Interface(), errs)
+					c.subPath = propName
+					vad.Validate(c, fv.Interface())
 				}
 				// set constVal ,struct 类型无法知道目标值是否为空，无法设定默认值
 				var vv interface{} = nil
@@ -111,6 +117,7 @@ func (p *Properties2) Validate(path string, value interface{}, errs *[]Error) {
 
 		}
 	}
+	c.parentPath = c.cachePath
 	//else{
 	//	*errs = append(*errs,Error{
 	//		Path: path,
@@ -121,7 +128,7 @@ func (p *Properties2) Validate(path string, value interface{}, errs *[]Error) {
 
 type Items ArrProp
 
-func (i Items) Validate(path string, value interface{}, errs *[]Error) {
+func (i Items) Validate(c *ValidateCtx,value interface{}) {
 	if value == nil {
 		return
 	}
@@ -132,7 +139,8 @@ func (i Items) Validate(path string, value interface{}, errs *[]Error) {
 	for idx, item := range arr {
 		for _, validator := range i {
 			if validator.Val != nil {
-				validator.Val.Validate(appendString(path, "[", strconv.Itoa(idx), "]"), item, errs)
+				c.subPath = appendString("[",strconv.Itoa(idx),"]")
+				validator.Val.Validate(c,item)
 			}
 		}
 	}
@@ -157,12 +165,12 @@ type PropItem struct {
 // 数组的for 比  map for快很多,在数据不大的情况下，for 也比 map get  快
 type ArrProp []PropItem
 
-func (a ArrProp) Validate(path string, value interface{}, errs *[]Error) {
+func (a ArrProp) Validate(c *ValidateCtx,value interface{}) {
 	for _, item := range a {
 		if item.Val == nil {
 			continue
 		}
-		item.Val.Validate(path, value, errs)
+		item.Val.Validate(c,value)
 	}
 }
 func (a ArrProp) Get(key string) Validator {
@@ -176,17 +184,21 @@ func (a ArrProp) Get(key string) Validator {
 
 type FlexProperties map[string]Validator
 
-func (f FlexProperties) Validate(path string, value interface{}, errs *[]Error) {
+func (f FlexProperties) Validate(c *ValidateCtx,value interface{}) {
 	m, ok := value.(map[string]interface{})
 	if !ok {
 		return
+	}
+	if c.subPath !=""{
+		c.parentPath = appendString(c.parentPath,".",c.subPath)
 	}
 	for key, val := range m {
 		vad := f[key]
 		if vad == nil {
 			continue
 		}
-		f[key].Validate(appendString(path, ".", key), val, errs)
+		c.subPath = key
+		f[key].Validate(c,val)
 	}
 }
 

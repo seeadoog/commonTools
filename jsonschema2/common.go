@@ -11,19 +11,44 @@ type Error struct {
 	Info string
 }
 
+type ValidateCtx struct {
+	errors []Error
+	subPath string
+	parentPath string
+	cachePath string
+}
+
+func (v *ValidateCtx)AddError(e *Error){
+	v.errors = append(v.errors,*e)
+}
+
+func (v *ValidateCtx)AddErrors(e ...Error){
+	for i, _ := range e {
+		v.AddError(&e[i])
+	}
+}
+
+func (v *ValidateCtx)Path()string{
+	return appendString(v.parentPath,".",v.subPath)
+}
+
+func (v *ValidateCtx)Clone()*ValidateCtx{
+	return &ValidateCtx{
+		subPath: v.subPath,
+		parentPath: v.parentPath,
+		cachePath: v.cachePath,
+	}
+}
+
 type Validator interface {
-	Validate(path *pathTree,value interface{},errs *[]Error)
+	Validate(c *ValidateCtx,value interface{})
+	Path()string
 }
 
 func appendString(s ...string)string{
 	sb:=strings.Builder{}
-	n:=0
-	for i:=0;i< len(s);i++{
-		n+= len(s[i])
-	}
-	sb.Grow(n)
-	for i:=0;i< len(s);i++{
-		sb.WriteString(s[i])
+	for _, str:= range s {
+		sb.WriteString(str)
 	}
 	return sb.String()
 }
@@ -60,5 +85,3 @@ func Number(v interface{})float64{
 func Equal(a,b interface{})bool{
 	return String(a) ==String(b)
 }
-
-
