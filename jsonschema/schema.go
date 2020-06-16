@@ -17,7 +17,7 @@ func (s *Schema)UnmarshalJSON(b []byte)error{
 		return err
 	}
 	s.i = i
-	p ,err := NewProp(i)
+	p ,err := NewProp(i,"$")
 	if err != nil{
 		return err
 	}
@@ -35,15 +35,12 @@ func (s *Schema)MarshalJSON()(b []byte,err error){
 }
 
 func (s *Schema)Validate(i interface{})error{
-	errs:=[]Error{}
-	path:=newPathTree()
-	path.path = "$"
-	s.prop.Validate(path,i,&errs)
-	if len(errs) == 0{
+	c:=&ValidateCtx{}
+	s.prop.Validate(c,i)
+	if len(c.errors) == 0{
 		return nil
 	}
-	pool.Put(path)
-	return errors.New(errsToString(errs))
+	return errors.New(errsToString(c.errors))
 }
 
 

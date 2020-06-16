@@ -1,13 +1,13 @@
 package jsonschema
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/qri-io/jsonschema"
 	"testing"
 )
-func newType(v string)Validator{
-	return Type(v)
-}
+
 
 var schema2 = []byte(`
 	{
@@ -84,7 +84,7 @@ func TestCreateNew(t *testing.T){
 	}
 	iv:=map[string]interface{}{
 		"a":map[string]interface{}{
-			"a1":"1",
+			"a1":"23",
 			"a2":"1",
 			"a3":"1",
 			"a4":"1",
@@ -99,7 +99,7 @@ func TestCreateNew(t *testing.T){
 			"a1":"1",
 			"a2":"1",
 			"a3":"1",
-			"a4":"1",
+			"a4":"5",
 		},
 		//"age":"4",
 		//"fs":3,
@@ -114,7 +114,7 @@ func TestCreateNew(t *testing.T){
 
 	}
 	var errs error
-	for i:=0;i<1;i++{
+	for i:=0;i<1000000;i++{
 		//var errs = []Error{}
 		errs=f.Validate(iv)
 		//errs =f.Validate(r)
@@ -128,128 +128,106 @@ func TestCreateNew(t *testing.T){
 	//fmt.Println(reflect.DeepEqual(a,b))
 }
 
-//func TestCreateNew2(t *testing.T){
-//
-//	sc:=&jsonschema.Schema{}
-//	if err:=json.Unmarshal(schema,sc);err != nil{
-//		panic(err)
-//	}
-//
-//	iv:=map[string]interface{}{
-//		"name":"biaoge",
-//		"any":"dd",
-//		"key1":"sdfsdf",
-//		"key2":"dfds",
-//		"son":map[string]interface{}{
-//			"age":float64(100),
-//		},
-//	}
-//	for i:=0;i<50000;i++{
-//		//var errs = []Error{}
-//		sc.Validate(context.Background(),iv)
-//		//fmt.Println(errs)
-//		//fmt.Println(st.Errs)
-//	}
-//}
+func TestCreateNew2(t *testing.T){
 
-var 	schema =[]byte(`
-{
-	"type":"object",
-	"if":{
-		"required":["key1"]
-	},
-	"then":{
-		"required":["key2"]
-	},
-	"dependencies":{
-		"key1":["key2"]
-	},
-	"allOf":[
-		{
-			"if":{
-				"keyMatch":{
-					"name":"biaoge"
-				}
-			},
-			"then":{
-				"flexProperties":{
-					"key2":{
-						"type":"string",
-						"maxLength":10,
-						"minLength":5
-					}
-				}
-			}
-		}
-	],
-	"setVal":{
-		"sonf\\.3name":"sname-j",
-		"val1":5,
-		"val2":"string",
-		"val3":{
-			"from":"name"
+	sc:=&jsonschema.Schema{}
+	if err:=json.Unmarshal(schema,sc);err != nil{
+		panic(err)
+	}
+	iv:=map[string]interface{}{
+		"a":map[string]interface{}{
+			"a1":"23",
+			"a2":"1",
+			"a3":"1",
+			"a4":"1",
 		},
-		"val5":"${name}",
-		"val4":{
-			"from":"(append)",
-			"args":[
-				"hello ",
-				{
-					"from":"son.age"	
-				}
-			]
-		}
-	},
-	"properties":{
-		"name":{
-			"type":"string",
-            "maxLength":5,
-			"minLength":3,
-			"pattern":"",
-			"not":{"enums":["face"]},
-			"enums":["jake","face"],
-			"replaceKey":"fname",
-			"constVal":"gt"
+		"b":map[string]interface{}{
+			"a1":"1",
+			"a2":"1",
+			"a3":"1",
+			"a4":"1",
 		},
-		"name2":{
-			"type":"string",
-            "maxLength":5,
-			"minLength":3,
-			"enums":["jake","face"],
-			"replaceKey":"fname2"
+		"c":map[string]interface{}{
+			"a1":"1",
+			"a2":"1",
+			"a3":"1",
+			"a4":"5",
 		},
-		"any":{
-			"anyOf":[
-                 {"type":"string"},
-				 {"type":"integer"}
-             ]
-		},
-		"name3":{
-			"type":"string",
-            "maxLength":5,
-			"minLength":3,
-			"enums":["jake","face"],
-			"constVal":"fname"
-		},
-		"son":{
-			"type":"object",
-			"properties":{
-				"age":{
-					"type":"integer",
-					"maximum":100,
-					"minimum":0,
-					"defaultVal":15
-				},
-				"name":{
-					"type":"string",
-					"maxLength":10,
-					"defaultVal":"dajj"
-				}
-			}
-		},
-		"key1":{"type":"string"},
-		"key2":{"type":"string"}
+		//"age":"4",
+		//"fs":3,
+		//"sons":[]interface{}{1,2,3},
+	}
+	for i:=0;i<100000;i++{
+		//var errs = []Error{}
+		sc.Validate(context.Background(),iv)
+		//fmt.Println(errs)
+		//fmt.Println(st.Errs)
 	}
 }
 
+var 	schema =[]byte(`
+{
+
+  "type": "object",
+  "properties": {
+    "a": {
+      "type": "object",
+      "properties": {
+        "a1": {
+          "type": "string",
+          "maxLength": 5
+        },
+        "a2": {
+          "type": "string",
+          "maxLength": 5
+        },
+        "a3": {
+          "type": "string",
+          "maxLength": 5
+        },
+        "a4": {
+          "type": "string"
+        }
+      }
+    },
+    "b": {
+      "type": "object",
+      "properties": {
+        "a1": {
+          "type": "string",
+          "maxLength": 5
+        },
+        "a2": {
+          "type": "string"
+        },
+        "a3": {
+          "type": "string",
+          "maxLength": 5
+        },
+        "a4": {
+          "type": "string"
+        }
+      }
+    },
+    "c": {
+      "type": "object",
+      "properties": {
+        "a1": {
+          "type": "string",
+          "maxLength": 5
+        },
+        "a2": {
+          "type": "string"
+        },
+        "a3": {
+          "type": "string",
+          "maxLength": 5
+        },
+        "a4": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
 `)

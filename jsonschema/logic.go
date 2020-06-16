@@ -6,28 +6,29 @@ import (
 
 type AnyOf []Validator
 
-func (a AnyOf) Validate(path *pathTree, value interface{}, errs *[]Error) {
+func (a AnyOf) Validate(c *ValidateCtx,value interface{}) {
 	allErrs:=[]Error{}
 	for _, validator := range a {
-		e:=[]Error{}
-		validator.Validate(path,value,&e)
-		if len(e) == 0{
+		cb:=c.Clone()
+		validator.Validate(cb,value)
+		if len(cb.errors) == 0{
 			return
 		}
-		allErrs = append(allErrs,e...)
+		allErrs = append(allErrs,cb.errors...)
 	}
 	// todo 区分errors
-	*errs = append(*errs,allErrs...)
+
+	c.AddErrors(allErrs...)
 }
 
-func NewAnyOf( i interface{},parent Validator)(Validator,error){
+func NewAnyOf( i interface{},path string,parent Validator)(Validator,error){
 	m,ok:=i.([]interface{})
 	if !ok{
 		return nil,fmt.Errorf("value of anyOf must be array:%v",i)
 	}
 	any:=AnyOf{}
 	for idx, v := range m {
-		ip,err:=NewProp(v)
+		ip,err:=NewProp(v,path)
 		if err != nil{
 			return nil, fmt.Errorf("anyOf index:%d is invalid:%w %v",idx,err,v)
 		}
@@ -37,39 +38,39 @@ func NewAnyOf( i interface{},parent Validator)(Validator,error){
 }
 
 type If struct {
-	parent ArrProp
+	parent *ArrProp
 	v Validator
 }
 
-func (i If) Validate(path *pathTree, value interface{}, errs *[]Error) {
-	ifErrs:=[]Error{}
-	i.v.Validate(path,value,&ifErrs)
-	if len(ifErrs)==0{
+func (i If) Validate(c *ValidateCtx,value interface{}) {
+	cif:=c.Clone()
+	i.v.Validate(cif,value)
+	if len(cif.errors)==0{
 		if i.parent!= nil{
 			then,ok:=i.parent.Get("then").(Then)
 			if ok{
-				then.v.Validate(path,value,errs)
+				then.v.Validate(c,value)
 			}
 		}
 	}else{
 		if i.parent!= nil{
 			elsev,ok:=i.parent.Get("else").(Else)
 			if ok{
-				elsev.v.Validate(path,value,errs)
+				elsev.v.Validate(c,value)
 			}
 		}
 	}
 }
 
-func NewIf(i interface{},parent Validator)(Validator,error){
-	ifp,err:=NewProp(i)
+func NewIf(i interface{},path string,parent Validator)(Validator,error){
+	ifp,err:=NewProp(i,path)
 	if err != nil{
 		return nil, err
 	}
 	iff:=&If{
 		v: ifp,
 	}
-	pp,ok:=parent.(ArrProp)
+	pp,ok:=parent.(*ArrProp)
 	if ok{
 		iff.parent = pp
 	}
@@ -79,7 +80,7 @@ type Then struct {
 	v Validator
 }
 
-func (t Then) Validate(path *pathTree, value interface{}, errs *[]Error) {
+func (t Then) Validate(c *ValidateCtx,value interface{}) {
 	// then 不能主动调用
 }
 
@@ -87,12 +88,12 @@ type Else struct {
 	v Validator
 }
 
-func (e Else) Validate(path *pathTree, value interface{}, errs *[]Error) {
+func (e Else) Validate(c *ValidateCtx,value interface{}) {
 	//panic("implement me")
 }
 
-func NewThen(i interface{},parent Validator)(Validator,error){
-	v,err:= NewProp(i)
+func NewThen(i interface{},path string,parent Validator)(Validator,error){
+	v,err:= NewProp(i,path)
 	if err != nil{
 		return nil, err
 	}
@@ -101,8 +102,8 @@ func NewThen(i interface{},parent Validator)(Validator,error){
 	},nil
 }
 
-func NewElse(i interface{},parent Validator)(Validator,error){
-	v,err:= NewProp(i)
+func NewElse(i interface{},path string,parent Validator)(Validator,error){
+	v,err:= NewProp(i,path)
 	if err != nil{
 		return nil, err
 	}
@@ -113,22 +114,23 @@ func NewElse(i interface{},parent Validator)(Validator,error){
 
 type Not struct {
 	v Validator
+	Path string
 }
 
-func (n Not) Validate(path *pathTree, value interface{}, errs *[]Error) {
-	ners:=[]Error{}
-	n.v.Validate(path,value,&ners)
+func (n Not) Validate(c *ValidateCtx,value interface{}) {
+	cn:=c.Clone()
+	n.v.Validate(cn,value)
 	//fmt.Println(ners,value)
-	if len(ners) ==0{
-		*errs = append(*errs,Error{
-			Path: path.String(),
+	if len(cn.errors) ==0{
+		c.AddErrors(Error{
+			Path: n.Path,
 			Info: "is not valid",
 		})
 	}
 }
 
-func NewNot(i interface{},parent Validator)(Validator,error){
-	p,err:=NewProp(i)
+func NewNot(i interface{},path string,parent Validator)(Validator,error){
+	p,err:=NewProp(i,path)
 	if err != nil{
 		return nil, err
 	}
@@ -137,20 +139,20 @@ func NewNot(i interface{},parent Validator)(Validator,error){
 
 type AllOf []Validator
 
-func (a AllOf) Validate(path *pathTree, value interface{}, errs *[]Error) {
+func (a AllOf) Validate(c *ValidateCtx,value interface{}) {
 	for _, validator := range a {
-		validator.Validate(path,value,errs)
+		validator.Validate(c,value)
 	}
 }
 
-func NewAllOf(i interface{},parent Validator)(Validator,error){
+func NewAllOf(i interface{},path string,parent Validator)(Validator,error){
 	arr,ok:=i.([]interface{})
 	if !ok{
 		return nil,fmt.Errorf("value of 'allOf' must be array: %v",i)
 	}
 	all:=AllOf{}
 	for _, ai := range arr {
-		iv,err:=NewProp(ai)
+		iv,err:=NewProp(ai,path)
 		if err != nil{
 			return nil, err
 		}
@@ -159,22 +161,25 @@ func NewAllOf(i interface{},parent Validator)(Validator,error){
 	return all,nil
 }
 
-type Dependencies map[string][]string
+type Dependencies struct {
+	Val map[string][]string
+	Path string
+}
 
-func (d Dependencies) Validate(path *pathTree, value interface{}, errs *[]Error) {
+func (d *Dependencies) Validate(c *ValidateCtx,value interface{}) {
 	m,ok:=value.(map[string]interface{})
 	if !ok{
 		return
 	}
 	// 如果存在key，那么必须存在某些key
-	for key, vals := range d {
+	for key, vals := range d.Val{
 		_,ok:=m[key]
 		if ok{
 			for _, val := range vals {
 				_,ok = m[val]
 				if !ok{
-					*errs = append(*errs,Error{
-						Path: appendString(path.String(),".",val),
+					c.AddErrors(Error{
+						Path: appendString(d.Path,".",val),
 						Info: "is required",
 					})
 				}
@@ -183,12 +188,15 @@ func (d Dependencies) Validate(path *pathTree, value interface{}, errs *[]Error)
 	}
 }
 
-func NewDependencies(i interface{},parent Validator)(Validator,error){
+func NewDependencies(i interface{},path string,parent Validator)(Validator,error){
 	m,ok:=i.(map[string]interface{})
 	if !ok{
 		return nil, fmt.Errorf("value of dependencies must be map[string][]string :%v", i)
 	}
-	vad:=Dependencies{}
+	vad:=&Dependencies{
+		Val: map[string][]string{},
+		Path: path,
+	}
 	for key, arris := range m {
 		arrs,ok:=arris.([]interface{})
 		if !ok{
@@ -203,7 +211,7 @@ func NewDependencies(i interface{},parent Validator)(Validator,error){
 			}
 			strs[idx] = str
 		}
-		vad[key] = strs
+		vad.Val[key] = strs
 
 	}
 	return vad, nil
@@ -217,33 +225,39 @@ func NewDependencies(i interface{},parent Validator)(Validator,error){
 }
  */
 
-type KeyMatch map[string]interface{}
+type KeyMatch struct {
+	Val map[string]interface{}
+	Path string
+}
 
-func (k KeyMatch) Validate(path *pathTree, value interface{}, errs *[]Error) {
+func (k *KeyMatch) Validate(c *ValidateCtx,value interface{}) {
 	m,ok:=value.(map[string]interface{})
 	if !ok{
-		*errs = append(*errs,Error{
-			Path: path.String(),
-			Info: "type is not object",
+		c.AddError(Error{
+			Path: k.Path,
+			Info: "val is not object",
 		})
 	}
-	for key, want := range k {
+	for key, want := range k.Val {
 		target:=m[key]
 		if target != want {
-			*errs = append(*errs,Error{
-				Path: appendString(path.String(),".",key),
+			c.AddError(Error{
+				Path: appendString(k.Path,".",key),
 				Info: fmt.Sprintf("value must be %v",want),
 			})
 		}
 	}
 }
 
-func NewKeyMatch(i interface{},parent Validator)(Validator,error){
+func NewKeyMatch(i interface{},path string,parent Validator)(Validator,error){
 	m,ok:=i.(map[string]interface{})
 	if !ok{
 		return nil,fmt.Errorf("value of keyMatch must be map[string]interface{} :%v",i)
 	}
-	return KeyMatch(m),nil
+	return &KeyMatch{
+		Val: m,
+		Path: path,
+	},nil
 }
 
 /*
@@ -266,26 +280,26 @@ type Switch struct {
 	Default Validator
 }
 
-func (s Switch) Validate(path *pathTree, value interface{}, errs *[]Error) {
+func (s Switch) Validate(c *ValidateCtx,value interface{}) {
 	m,ok:=value.(map[string]interface{})
 	if !ok{
 		if s.Default != nil{
-			s.Default.Validate(path,value,errs)
+			s.Default.Validate(c,value)
 		}
 		return
 	}
 	for cas, validator := range s.Case {
 		if cas ==String(m[s.Switch]){
-			validator.Validate(path,value,errs)
+			validator.Validate(c,value)
 			return
 		}
 	}
 	if s.Default != nil{
-		s.Default.Validate(path,value,errs)
+		s.Default.Validate(c,value)
 	}
 }
 
-func NewSwitch(i interface{},parent Validator)(Validator,error){
+func NewSwitch(i interface{},path string,parent Validator)(Validator,error){
 	m,ok:=i.(map[string]interface{})
 	if !ok{
 		return nil, fmt.Errorf("value of Switch must be map :%v", i)
@@ -304,7 +318,7 @@ func NewSwitch(i interface{},parent Validator)(Validator,error){
 		return nil, fmt.Errorf("cases must be map:%v",i)
 	}
 	for key, val := range cases {
-		vad,err:=NewProp(val)
+		vad,err:=NewProp(val,path)
 		if err != nil{
 			return nil, err
 		}
@@ -312,7 +326,7 @@ func NewSwitch(i interface{},parent Validator)(Validator,error){
 	}
 	def:=m["default"]
 	if def != nil{
-		defv,err:=NewProp(def)
+		defv,err:=NewProp(def,path)
 		if err != nil{
 			return nil, err
 		}

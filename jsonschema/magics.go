@@ -6,7 +6,7 @@ type ConstVal struct {
 	Val interface{}
 }
 
-func (c ConstVal) Validate(path *pathTree, value interface{}, errs *[]Error) {
+func (cc ConstVal) Validate(c *ValidateCtx,value interface{}) {
 
 }
 
@@ -14,27 +14,27 @@ type DefaultVal struct {
 	Val interface{}
 }
 
-func (d DefaultVal) Validate(path *pathTree, value interface{}, errs *[]Error) {
+func (d DefaultVal) Validate(c *ValidateCtx,value interface{}) {
 
 }
 
 type ReplaceKey string
 
-func (r ReplaceKey) Validate(path *pathTree, value interface{}, errs *[]Error) {
+func (r ReplaceKey) Validate(c *ValidateCtx,value interface{}) {
 
 }
 
-func NewConstVal(i interface{},parent Validator) (Validator, error) {
+func NewConstVal(i interface{},path string ,parent Validator) (Validator, error) {
 	return &ConstVal{
 		Val: i,
 	}, nil
 }
 
-func NewDefaultVal(i interface{},parent Validator) (Validator, error) {
+func NewDefaultVal(i interface{},path string,parent Validator) (Validator, error) {
 	return &DefaultVal{i}, nil
 }
 
-func NewReplaceKey(i interface{},parent Validator) (Validator, error) {
+func NewReplaceKey(i interface{},path string,parent Validator) (Validator, error) {
 	s, ok := i.(string)
 	if !ok {
 		return nil, fmt.Errorf("value of 'replaceKey' must be string :%v", i)
@@ -82,7 +82,7 @@ func NewReplaceKey(i interface{},parent Validator) (Validator, error) {
 
 type SetVal map[*JsonPathCompiled]Value
 
-func (s SetVal) Validate(path *pathTree, value interface{}, errs *[]Error) {
+func (s SetVal) Validate(c *ValidateCtx,value interface{}) {
 	m,ok:=value.(map[string]interface{})
 	if !ok{
 		return
@@ -94,7 +94,7 @@ func (s SetVal) Validate(path *pathTree, value interface{}, errs *[]Error) {
 	}
 }
 
-func NewSetVal(i interface{},parent Validator)(Validator,error){
+func NewSetVal(i interface{},path string ,parent Validator)(Validator,error){
 	m,ok:=i.(map[string]interface{})
 	if !ok{
 		return nil, fmt.Errorf("value of setVal must be map[string]interface{} :%v", i)
