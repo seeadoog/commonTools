@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"regexp"
 	"testing"
 )
 
@@ -14,7 +13,7 @@ func Test_parseTokens(t *testing.T) {
 }
 
 func TestReg(t *testing.T){
-	var reg = regexp.MustCompile(`(\w*)(\[(\d+)\])?$`)
+	//var reg = regexp.MustCompile(`(\w*)(\[(\d+)\])?$`)
 	str:="[44]"
 	fmt.Println(reg.MatchString(str))
 	res:=reg.FindAllSubmatch([]byte(str),-1)
