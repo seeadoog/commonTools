@@ -26,10 +26,9 @@ func (v *ValidateCtx)AddErrors(e ...Error){
 
 
 func (v *ValidateCtx)Clone()*ValidateCtx{
-	return &ValidateCtx{
-
-	}
+	return &ValidateCtx{}
 }
+
 type Validator interface {
 	Validate(c *ValidateCtx, value interface{})
 }
@@ -55,6 +54,13 @@ func String(v interface{})string{
 	switch v.(type) {
 	case string:
 		return v.(string)
+	case bool:
+		if v.(bool){
+			return "true"
+		}
+		return "false"
+	case float64:
+		return strconv.FormatFloat(v.(float64),'b',-1,64)
 	}
 	return fmt.Sprintf("%v",v)
 }
@@ -69,13 +75,29 @@ func Number(v interface{})float64{
 		}
 		return 0
 	case string:
-		i,_:=strconv.ParseFloat(v.(string),64)
-		return i
+		i,err:=strconv.ParseFloat(v.(string),64)
+		if err != nil{
+			return i
+		}
+		if v.(string) == "true"{
+			return 1
+		}
+		return 0
 	}
 	return 0
 }
 
-
+func Bool(v interface{})bool{
+	switch v.(type) {
+	case float64:
+		return v.(float64) > 0
+	case string:
+		return v.(string) == "true"
+	case bool:
+		return v.(bool)
+	}
+	return false
+}
 func Equal(a,b interface{})bool{
 	return String(a) ==String(b)
 }

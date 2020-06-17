@@ -1,10 +1,10 @@
 package jsonschema
 
 import (
-	"context"
+	//"context"
 	"encoding/json"
 	"fmt"
-	"github.com/qri-io/jsonschema"
+	//"github.com/qri-io/jsonschema"
 	"testing"
 )
 
@@ -79,18 +79,18 @@ var schema2 = []byte(`
 func TestCreateNew(t *testing.T){
 	ShowCompletePath = true
 	var f Schema
-	if err:=json.Unmarshal(schema2,&f);err != nil{
+	if err:=json.Unmarshal(schema,&f);err != nil{
 		panic(err)
 	}
 	iv:=map[string]interface{}{
 		"a":map[string]interface{}{
-			"a1":"23",
+			"a1":"dd",
 			"a2":"1",
 			"a3":"1",
 			"a4":"1",
 		},
 		"b":map[string]interface{}{
-			"a1":"1",
+			"a1":"dd",
 			"a2":"1",
 			"a3":"1",
 			"a4":"1",
@@ -114,7 +114,7 @@ func TestCreateNew(t *testing.T){
 
 	}
 	var errs error
-	for i:=0;i<1000000;i++{
+	for i:=0;i<100000;i++{
 		//var errs = []Error{}
 		errs=f.Validate(iv)
 		//errs =f.Validate(r)
@@ -128,42 +128,42 @@ func TestCreateNew(t *testing.T){
 	//fmt.Println(reflect.DeepEqual(a,b))
 }
 
-func TestCreateNew2(t *testing.T){
-
-	sc:=&jsonschema.Schema{}
-	if err:=json.Unmarshal(schema,sc);err != nil{
-		panic(err)
-	}
-	iv:=map[string]interface{}{
-		"a":map[string]interface{}{
-			"a1":"23",
-			"a2":"1",
-			"a3":"1",
-			"a4":"1",
-		},
-		"b":map[string]interface{}{
-			"a1":"1",
-			"a2":"1",
-			"a3":"1",
-			"a4":"1",
-		},
-		"c":map[string]interface{}{
-			"a1":"1",
-			"a2":"1",
-			"a3":"1",
-			"a4":"5",
-		},
-		//"age":"4",
-		//"fs":3,
-		//"sons":[]interface{}{1,2,3},
-	}
-	for i:=0;i<100000;i++{
-		//var errs = []Error{}
-		sc.Validate(context.Background(),iv)
-		//fmt.Println(errs)
-		//fmt.Println(st.Errs)
-	}
-}
+//func TestCreateNew2(t *testing.T){
+//
+//	sc:=&jsonschema.Schema{}
+//	if err:=json.Unmarshal(schema,sc);err != nil{
+//		panic(err)
+//	}
+//	iv:=map[string]interface{}{
+//		"a":map[string]interface{}{
+//			"a1":"23",
+//			"a2":"1",
+//			"a3":"1",
+//			"a4":"1",
+//		},
+//		"b":map[string]interface{}{
+//			"a1":"1",
+//			"a2":"1",
+//			"a3":"1",
+//			"a4":"1",
+//		},
+//		"c":map[string]interface{}{
+//			"a1":"1",
+//			"a2":"1",
+//			"a3":"1",
+//			"a4":"5",
+//		},
+//		//"age":"4",
+//		//"fs":3,
+//		//"sons":[]interface{}{1,2,3},
+//	}
+//	for i:=0;i<100000;i++{
+//		//var errs = []Error{}
+//		sc.Validate(context.Background(),iv)
+//		//fmt.Println(errs)
+//		//fmt.Println(st.Errs)
+//	}
+//}
 
 var 	schema =[]byte(`
 {
@@ -195,7 +195,8 @@ var 	schema =[]byte(`
       "properties": {
         "a1": {
           "type": "string",
-          "maxLength": 5
+          "maxLength": 5,
+          "enum":["dd"]
         },
         "a2": {
           "type": "string"

@@ -7,13 +7,14 @@ import (
 
 func init() {
 	// 这些显示放在funcs 里面时，不让编译通过，透。。。
-	RegisterValidator("properties", NewProperties2)
+	RegisterValidator("properties", NewProperties(false))
+	RegisterValidator("flexProperties", NewProperties(true))
 	RegisterValidator("items", NewItems)
 	RegisterValidator("anyOf", NewAnyOf)
 	RegisterValidator("if", NewIf)
 	RegisterValidator("else", NewElse)
 	RegisterValidator("then", NewThen)
-	RegisterValidator("flexProperties", NewFlexProperties)
+	//RegisterValidator("flexProperties", NewFlexProperties)
 	RegisterValidator("not", NewNot)
 	RegisterValidator("allOf", NewAllOf)
 	RegisterValidator("dependencies", NewDependencies)
@@ -21,6 +22,7 @@ func init() {
 	RegisterValidator("setVal", NewSetVal)
 	//RegisterValidator("script",NewScript)
 	RegisterValidator("switch",NewSwitch)
+	RegisterValidator("formatVal", NewFormatVal)
 
 }
 // 忽略的校验器
@@ -42,6 +44,7 @@ func RegisterValidator(name string, fun NewValidatorFunc) {
 
 var funcs = map[string]NewValidatorFunc{
 	"type":       NewType,
+	"types":       NewTypes,
 	"maxLength":  NewMaxLen,
 	"minLength":  NewMinLen,
 	"maximum":    NewMaximum,
@@ -68,7 +71,7 @@ type ArrProp struct {
 	Path string
 }
 
-func (a ArrProp) Validate(c *ValidateCtx,value interface{}) {
+func (a *ArrProp) Validate(c *ValidateCtx,value interface{}) {
 	for _, item := range a.Val {
 		if item.Val == nil {
 			continue
@@ -76,7 +79,7 @@ func (a ArrProp) Validate(c *ValidateCtx,value interface{}) {
 		item.Val.Validate(c,value)
 	}
 }
-func (a ArrProp) Get(key string) Validator {
+func (a *ArrProp) Get(key string) Validator {
 	for _, item := range a.Val {
 		if item.Key == key {
 			return item.Val
@@ -104,7 +107,15 @@ func NewProp(i interface{},path string) (Validator, error) {
 		if funcs[key] == nil {
 			return nil, fmt.Errorf("%s is unknown validator", key)
 		}
-		vad, err := funcs[key](val,path,arr)
+		var vad Validator
+		var err error
+		// items 的path 不一样，
+		if key == "items"{
+			vad,err = funcs[key](val,path+"[*]",arr)
+		}else{
+			vad, err = funcs[key](val,path,arr)
+		}
+
 		if err != nil {
 			return nil,fmt.Errorf("create prop error:key=%s,err=%w",key, err)
 		}
@@ -123,7 +134,9 @@ type Properties2 struct {
 	constVals   map[string]*ConstVal
 	defaultVals map[string]*DefaultVal
 	replaceKeys map[string]ReplaceKey
+	formats    map[string]FormatVal
 	Path string
+	EnableUnknownField bool
 }
 
 var ShowCompletePath bool
@@ -136,7 +149,7 @@ func (p *Properties2) Validate(c *ValidateCtx,value interface{}) {
 	if m, ok := value.(map[string]interface{}); ok {
 		for k, v := range m {
 			pv := p.properties[k]
-			if pv == nil {
+			if pv == nil  && !p.EnableUnknownField{
 				c.AddError(Error{
 					Path: appendString(p.Path,".",k),
 					Info: "unknown field",
@@ -163,6 +176,14 @@ func (p *Properties2) Validate(c *ValidateCtx,value interface{}) {
 				}
 				m[string(rpk)] = mv
 
+			}
+		}
+		if len(p.formats) >0 {
+			for key, v := range p.formats {
+				vv,ok:=m[key]
+				if ok{
+					m[key] = v.Convert(vv)
+				}
 			}
 		}
 	} else {
@@ -226,84 +247,55 @@ func (p *Properties2) Validate(c *ValidateCtx,value interface{}) {
 	//}
 }
 
+func NewProperties(enableUnKnownFields bool)NewValidatorFunc{
+	return func(i interface{}, path string, parent Validator) (validator Validator, e error) {
+		m, ok := i.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("cannot create properties with not object type: %v,flex:%v", i,enableUnKnownFields)
+		}
+		p := &Properties2{
+			properties:         map[string]Validator{},
+			replaceKeys:        map[string]ReplaceKey{},
+			constVals:          map[string]*ConstVal{},
+			defaultVals:        map[string]*DefaultVal{},
+			formats:            map[string]FormatVal{},
+			Path:               path,
+			EnableUnknownField: enableUnKnownFields,
+		}
+		for key, val := range m {
+			vad, err := NewProp(val,appendString(path,".",key))
+			if err != nil {
+				return nil, err
+			}
+			p.properties[key] = vad
+		}
 
-func NewProperties2(i interface{},path string,parent Validator) (Validator, error) {
-	m, ok := i.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("cannot create properties with not object type: %v", i)
-	}
-	p := &Properties2{
-		properties: map[string]Validator{},
-		replaceKeys: map[string]ReplaceKey{},
-		constVals: map[string]*ConstVal{},
-		defaultVals: map[string]*DefaultVal{},
-	}
-	for key, val := range m {
-		vad, err := NewProp(val,appendString(path,".",key))
-		if err != nil {
-			return nil, err
-		}
-		p.properties[key] = vad
-	}
+		for key, val := range p.properties {
+			prop,ok:=val.(*ArrProp)
+			if !ok{
+				continue
+			}
+			constVal,ok:=prop.Get("constVal").(*ConstVal)
+			if ok{
+				p.constVals[key] =constVal
+			}
+			defaultVal,ok:=prop.Get("defaultVal").(*DefaultVal)
+			if ok{
+				p.defaultVals[key] = defaultVal
+			}
+			replaceKey,ok:=prop.Get("replaceKey").(ReplaceKey)
+			if ok{
+				p.replaceKeys[key] = replaceKey
+			}
 
-	for key, val := range p.properties {
-		prop,ok:=val.(ArrProp)
-		if !ok{
-			continue
+			format,ok:=prop.Get("format").(FormatVal)
+			if ok{
+				p.formats[key] = format
+			}
 		}
-		constVal,ok:=prop.Get("constVal").(*ConstVal)
-		if ok{
-			p.constVals[key] =constVal
-		}
-		defaultVal,ok:=prop.Get("defaultVal").(*DefaultVal)
-		if ok{
-			p.defaultVals[key] = defaultVal
-		}
-		replaceKey,ok:=prop.Get("replaceKey").(ReplaceKey)
-		if ok{
-			p.replaceKeys[key] = replaceKey
-		}
+
+		return p, nil
 	}
-
-	return p, nil
-
 }
 
 
-type FlexProperties struct {
-	Val map[string]Validator
-	Path string
-}
-
-func (f FlexProperties) Validate(c *ValidateCtx,value interface{}) {
-	m, ok := value.(map[string]interface{})
-	if !ok {
-		return
-	}
-	for key, val := range m {
-		vad := f.Val[key]
-		if vad == nil {
-			continue
-		}
-		vad.Validate(c, val)
-	}
-}
-
-// 宽松校验器，允许存在不在properties 中的值
-func NewFlexProperties(i interface{},path string, parent Validator) (Validator, error) {
-	m, ok := i.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("cannot create flexProperties with not object type: %v", i)
-	}
-	p := FlexProperties{
-		Val: map[string]Validator{},
-	}
-	for key, val := range m {
-		vad, err := NewProp(val,appendString(path,".",key))
-		if err != nil {
-			return nil, err
-		}
-		p.Val[key] = vad
-	}
-	return p, nil
-}

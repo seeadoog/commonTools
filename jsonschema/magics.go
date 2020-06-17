@@ -42,6 +42,33 @@ func NewReplaceKey(i interface{},path string,parent Validator) (Validator, error
 	return ReplaceKey(s), nil
 
 }
+
+type FormatVal _type
+
+func (f FormatVal) Validate(c *ValidateCtx, value interface{}) {
+
+}
+
+func (f FormatVal)Convert(value interface{})interface{}{
+	switch _type(f) {
+	case typeString:
+		return String(value)
+	case typeBool:
+		return Bool(value)
+	case typeInteger,typeNumber:
+		return Number(value)
+	}
+	return value
+}
+
+func NewFormatVal(i interface{},path string,parent Validator)(Validator,error){
+	str,ok:=i.(string)
+	if !ok{
+		return nil,fmt.Errorf("value of format must be string:%s",str)
+	}
+	return FormatVal(types[str]),nil
+}
+
 /*
 {
 	"setVal":{
