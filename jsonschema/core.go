@@ -129,7 +129,7 @@ func NewProp(i interface{},path string) (Validator, error) {
 
 
 
-type Properties2 struct {
+type Properties struct {
 	properties  map[string]Validator
 	constVals   map[string]*ConstVal
 	defaultVals map[string]*DefaultVal
@@ -141,7 +141,7 @@ type Properties2 struct {
 
 var ShowCompletePath bool
 
-func (p *Properties2) Validate(c *ValidateCtx,value interface{}) {
+func (p *Properties) Validate(c *ValidateCtx,value interface{}) {
 	if value == nil {
 		return
 	}
@@ -253,7 +253,7 @@ func NewProperties(enableUnKnownFields bool)NewValidatorFunc{
 		if !ok {
 			return nil, fmt.Errorf("cannot create properties with not object type: %v,flex:%v", i,enableUnKnownFields)
 		}
-		p := &Properties2{
+		p := &Properties{
 			properties:         map[string]Validator{},
 			replaceKeys:        map[string]ReplaceKey{},
 			constVals:          map[string]*ConstVal{},

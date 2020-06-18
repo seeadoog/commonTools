@@ -47,6 +47,11 @@ func (s *Schema)Validate(i interface{})error{
 
 func errsToString(errs []Error)string{
 	sb:=strings.Builder{}
+	n:=0
+	for _, err := range errs {
+		n+= len(err.Path)+ len(err.Info)+5
+	}
+	sb.Grow(n)
 	for _, err := range errs {
 		sb.WriteString(appendString("'",err.Path,"' ",err.Info,"; "))
 	}

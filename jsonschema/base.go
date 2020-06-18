@@ -28,13 +28,98 @@ var types = map[string]_type{
 	"array":   typeArray,
 }
 
+
+
+type typeValidateFunc func(path string,c *ValidateCtx, value interface{})
+
+
+var typeFuncs = [...]typeValidateFunc{
+	0: func(path string, c *ValidateCtx, value interface{}) {
+
+	},
+	typeString: func(path string,c *ValidateCtx, value interface{}) {
+		if _, ok := value.(string); !ok {
+			c.AddError(Error{
+				Path: path,
+				Info: "type must be string",
+			})
+		}
+	},
+	typeObject: func(path string, c *ValidateCtx, value interface{}) {
+		if _, ok := value.(map[string]interface{}); !ok {
+			rt := reflect.ValueOf(value)
+			if rt.Kind() == reflect.Struct {
+				return
+			}
+			if rt.Kind() == reflect.Ptr {
+				if !rt.IsNil() {
+					if rt.Elem().Kind() == reflect.Struct {
+						return
+					}
+				}
+			}
+			c.AddError(Error{
+				Path: path,
+				Info: "type must be object",
+			})
+		}
+	},
+	typeInteger: func(path string, c *ValidateCtx, value interface{}) {
+		if _, ok := value.(float64); !ok {
+			rt := reflect.TypeOf(value)
+			switch rt.Kind() {
+			case reflect.Int, reflect.Int16, reflect.Int8, reflect.Int32, reflect.Int64, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint, reflect.Float32, reflect.Float64:
+				return
+			}
+			c.AddError(Error{
+				Path: path,
+				Info: "type must be number",
+			})
+		}
+	},
+
+	typeNumber: func(path string, c *ValidateCtx, value interface{}) {
+		if _, ok := value.(float64); !ok {
+			rt := reflect.TypeOf(value)
+			switch rt.Kind() {
+			case reflect.Int, reflect.Int16, reflect.Int8, reflect.Int32, reflect.Int64, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint, reflect.Float32, reflect.Float64:
+				return
+			}
+			c.AddError(Error{
+				Path: path,
+				Info: "type must be number",
+			})
+		}
+	},
+	typeBool: func(path string, c *ValidateCtx, value interface{}) {
+		if _, ok := value.(bool); !ok {
+			c.AddError(Error{
+				Path: path,
+				Info: "type must be boolean",
+			})
+		}
+	},
+
+	typeArray: func(path string, c *ValidateCtx, value interface{}) {
+		if _, ok := value.([]interface{}); !ok {
+			c.AddError(Error{
+				Path: path,
+				Info: "type must be array",
+			})
+		}
+	},
+}
+
 type Type struct {
 	Path string
 	Val  _type
+
 }
 
-
 func (t *Type) Validate(c *ValidateCtx, value interface{}) {
+
+	//t.Val(t.Path,c,value)
+
 
 	switch t.Val {
 
@@ -106,6 +191,7 @@ func NewType(i interface{}, path string, parent Validator) (Validator, error) {
 	if !ok{
 		return nil,fmt.Errorf("invalie type:%s",iv)
 	}
+
 	return &Type{
 		Val:  t,
 		Path: path,

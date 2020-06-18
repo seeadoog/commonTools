@@ -114,7 +114,7 @@ func TestCreateNew(t *testing.T){
 
 	}
 	var errs error
-	for i:=0;i<100000;i++{
+	for i:=0;i<1000000;i++{
 		//var errs = []Error{}
 		errs=f.Validate(iv)
 		//errs =f.Validate(r)
@@ -232,3 +232,5 @@ var 	schema =[]byte(`
   }
 }
 `)
+
+

@@ -1,6 +1,5 @@
 package jsonschema
 
-import ()
 
 var valueFuncs = map[string]Func{
 	"append": funcAppend,

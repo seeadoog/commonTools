@@ -5,6 +5,8 @@ import "strings"
 func init(){
 	SetFunc("split",funcSplit)
 	SetFunc("join",funcJoin)
+	SetFunc("add",funcAdd)
+	SetFunc("append",funcAppend)
 }
 
 func funcAppend(ctx Context, args ...Value) interface{} {

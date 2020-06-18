@@ -60,7 +60,7 @@ func String(v interface{})string{
 		}
 		return "false"
 	case float64:
-		return strconv.FormatFloat(v.(float64),'b',-1,64)
+		return strconv.FormatFloat(v.(float64),'f',-1,64)
 	}
 	return fmt.Sprintf("%v",v)
 }
