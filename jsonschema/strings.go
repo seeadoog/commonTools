@@ -7,12 +7,10 @@ import (
 
 type Pattern struct {
 	regexp *regexp.Regexp
-	Path string
+	Path   string
 }
 
-
-
-func (p *Pattern) Validate(c *ValidateCtx,value interface{}) {
+func (p *Pattern) Validate(c *ValidateCtx, value interface{}) {
 	str, ok := value.(string)
 	if !ok {
 		return
@@ -25,16 +23,14 @@ func (p *Pattern) Validate(c *ValidateCtx,value interface{}) {
 	}
 }
 
-func NewPattern(i interface{},path string,parent Validator) (Validator, error) {
+func NewPattern(i interface{}, path string, parent Validator) (Validator, error) {
 	str, ok := i.(string)
 	if !ok {
-		return nil, fmt.Errorf("%s is not a string when assign regexp", str)
+		return nil, fmt.Errorf("%s is not a string when assign regexp,path:%s", str, path)
 	}
 	reg, err := regexp.Compile(str)
 	if err != nil {
 		return nil, fmt.Errorf("regexp compile error:%w", err)
 	}
-	return &Pattern{regexp: reg,Path: path}, nil
+	return &Pattern{regexp: reg, Path: path}, nil
 }
-
-

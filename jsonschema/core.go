@@ -21,17 +21,25 @@ func init() {
 	RegisterValidator("keyMatch", NewKeyMatch)
 	RegisterValidator("setVal", NewSetVal)
 	//RegisterValidator("script",NewScript)
-	RegisterValidator("switch",NewSwitch)
+	RegisterValidator("switch", NewSwitch)
+	RegisterValidator(keyCase, NewCases)
+	RegisterValidator(keyDefault, NewDefault)
 	RegisterValidator("formatVal", NewFormatVal)
 
 }
+
 // 忽略的校验器
 var ignoreKeys = map[string]int{
-	"title":1,
-	"comment":1,
+	"title":   1,
+	"comment": 1,
 }
 
-func AddIgnoreKeys(key string){
+var lazyLoads = map[string]int{
+	"switch": 1,
+	"if":     1,
+}
+
+func AddIgnoreKeys(key string) {
 	ignoreKeys[key] = 1
 }
 func RegisterValidator(name string, fun NewValidatorFunc) {
@@ -41,10 +49,9 @@ func RegisterValidator(name string, fun NewValidatorFunc) {
 	funcs[name] = fun
 }
 
-
 var funcs = map[string]NewValidatorFunc{
 	"type":       NewType,
-	"types":       NewTypes,
+	"types":      NewTypes,
 	"maxLength":  NewMaxLen,
 	"minLength":  NewMinLen,
 	"maximum":    NewMaximum,
@@ -54,12 +61,9 @@ var funcs = map[string]NewValidatorFunc{
 	"defaultVal": NewDefaultVal,
 	"replaceKey": NewReplaceKey,
 	"enums":      NewEnums,
-	"enum":      NewEnums,
+	"enum":       NewEnums,
 	"pattern":    NewPattern,
 }
-
-
-
 
 type PropItem struct {
 	Key string
@@ -67,16 +71,16 @@ type PropItem struct {
 }
 
 type ArrProp struct {
-	Val []PropItem
+	Val  []PropItem
 	Path string
 }
 
-func (a *ArrProp) Validate(c *ValidateCtx,value interface{}) {
+func (a *ArrProp) Validate(c *ValidateCtx, value interface{}) {
 	for _, item := range a.Val {
 		if item.Val == nil {
 			continue
 		}
-		item.Val.Validate(c,value)
+		item.Val.Validate(c, value)
 	}
 }
 func (a *ArrProp) Get(key string) Validator {
@@ -88,60 +92,77 @@ func (a *ArrProp) Get(key string) Validator {
 	return nil
 }
 
-
-func NewProp(i interface{},path string) (Validator, error) {
+func NewProp(i interface{}, path string) (Validator, error) {
 	m, ok := i.(map[string]interface{})
 	if !ok {
-		return nil, fmt.Errorf("cannot create prop with not object type: %v", i)
+		return nil, fmt.Errorf("cannot create prop with not object type: %v,path:%s", i, path)
 	}
 	p := make([]PropItem, len(m))
-	arr:=&ArrProp{
-		Val: p,
+	arr := &ArrProp{
+		Val:  p,
 		Path: path,
 	}
-	idx:=0
+	idx := 0
 	for key, val := range m {
-		if ignoreKeys[key] >0{
+		if ignoreKeys[key] > 0 {
 			continue
 		}
 		if funcs[key] == nil {
-			return nil, fmt.Errorf("%s is unknown validator", key)
+			return nil, fmt.Errorf("%s is unknown validator,path=%s", key, path)
+		}
+		if lazyLoads[key] > 0 {
+			p[idx] = PropItem{
+				Key: key,
+			}
+			idx++
+			continue
 		}
 		var vad Validator
 		var err error
 		// items 的path 不一样，
-		if key == "items"{
-			vad,err = funcs[key](val,path+"[*]",arr)
-		}else{
-			vad, err = funcs[key](val,path,arr)
+		if key == "items" {
+			vad, err = funcs[key](val, path+"[*]", arr)
+		} else {
+			vad, err = funcs[key](val, path, arr)
 		}
 
 		if err != nil {
-			return nil,fmt.Errorf("create prop error:key=%s,err=%w",key, err)
+			return nil, fmt.Errorf("create prop error:key=%s,err=%w", key, err)
 		}
 		//p[key] = vad
-		p[idx] =  PropItem{Key: key, Val: vad}
+		p[idx] = PropItem{Key: key, Val: vad}
 		idx++
-
 	}
+
+	for idx, item := range p {
+		if item.Key == "" {
+			continue
+		}
+		if lazyLoads[item.Key] > 0 {
+			vad, err := funcs[item.Key](m[item.Key], item.Key, arr)
+			if err != nil {
+				return nil, err
+			}
+			p[idx].Val = vad
+		}
+	}
+
 	return arr, nil
 }
 
-
-
 type Properties struct {
-	properties  map[string]Validator
-	constVals   map[string]*ConstVal
-	defaultVals map[string]*DefaultVal
-	replaceKeys map[string]ReplaceKey
-	formats    map[string]FormatVal
-	Path string
+	properties         map[string]Validator
+	constVals          map[string]*ConstVal
+	defaultVals        map[string]*DefaultVal
+	replaceKeys        map[string]ReplaceKey
+	formats            map[string]FormatVal
+	Path               string
 	EnableUnknownField bool
 }
 
 var ShowCompletePath bool
 
-func (p *Properties) Validate(c *ValidateCtx,value interface{}) {
+func (p *Properties) Validate(c *ValidateCtx, value interface{}) {
 	if value == nil {
 		return
 	}
@@ -149,14 +170,14 @@ func (p *Properties) Validate(c *ValidateCtx,value interface{}) {
 	if m, ok := value.(map[string]interface{}); ok {
 		for k, v := range m {
 			pv := p.properties[k]
-			if pv == nil  && !p.EnableUnknownField{
+			if pv == nil && !p.EnableUnknownField {
 				c.AddError(Error{
-					Path: appendString(p.Path,".",k),
+					Path: appendString(p.Path, ".", k),
 					Info: "unknown field",
 				})
 				continue
 			}
-			pv.Validate(c,v)
+			pv.Validate(c, v)
 		}
 
 		for key, val := range p.constVals {
@@ -178,10 +199,10 @@ func (p *Properties) Validate(c *ValidateCtx,value interface{}) {
 
 			}
 		}
-		if len(p.formats) >0 {
+		if len(p.formats) > 0 {
 			for key, v := range p.formats {
-				vv,ok:=m[key]
-				if ok{
+				vv, ok := m[key]
+				if ok {
 					m[key] = v.Convert(vv)
 				}
 			}
@@ -218,7 +239,7 @@ func (p *Properties) Validate(c *ValidateCtx,value interface{}) {
 				if constv != nil {
 					vv = constv.Val
 				}
-				if vv == nil{
+				if vv == nil {
 					continue
 				}
 				setV := reflect.ValueOf(vv)
@@ -247,11 +268,11 @@ func (p *Properties) Validate(c *ValidateCtx,value interface{}) {
 	//}
 }
 
-func NewProperties(enableUnKnownFields bool)NewValidatorFunc{
+func NewProperties(enableUnKnownFields bool) NewValidatorFunc {
 	return func(i interface{}, path string, parent Validator) (validator Validator, e error) {
 		m, ok := i.(map[string]interface{})
 		if !ok {
-			return nil, fmt.Errorf("cannot create properties with not object type: %v,flex:%v", i,enableUnKnownFields)
+			return nil, fmt.Errorf("cannot create properties with not object type: %v,flex:%v,path:%s", i, enableUnKnownFields, path)
 		}
 		p := &Properties{
 			properties:         map[string]Validator{},
@@ -263,7 +284,7 @@ func NewProperties(enableUnKnownFields bool)NewValidatorFunc{
 			EnableUnknownField: enableUnKnownFields,
 		}
 		for key, val := range m {
-			vad, err := NewProp(val,appendString(path,".",key))
+			vad, err := NewProp(val, appendString(path, ".", key))
 			if err != nil {
 				return nil, err
 			}
@@ -271,25 +292,25 @@ func NewProperties(enableUnKnownFields bool)NewValidatorFunc{
 		}
 
 		for key, val := range p.properties {
-			prop,ok:=val.(*ArrProp)
-			if !ok{
+			prop, ok := val.(*ArrProp)
+			if !ok {
 				continue
 			}
-			constVal,ok:=prop.Get("constVal").(*ConstVal)
-			if ok{
-				p.constVals[key] =constVal
+			constVal, ok := prop.Get("constVal").(*ConstVal)
+			if ok {
+				p.constVals[key] = constVal
 			}
-			defaultVal,ok:=prop.Get("defaultVal").(*DefaultVal)
-			if ok{
+			defaultVal, ok := prop.Get("defaultVal").(*DefaultVal)
+			if ok {
 				p.defaultVals[key] = defaultVal
 			}
-			replaceKey,ok:=prop.Get("replaceKey").(ReplaceKey)
-			if ok{
+			replaceKey, ok := prop.Get("replaceKey").(ReplaceKey)
+			if ok {
 				p.replaceKeys[key] = replaceKey
 			}
 
-			format,ok:=prop.Get("format").(FormatVal)
-			if ok{
+			format, ok := prop.Get("format").(FormatVal)
+			if ok {
 				p.formats[key] = format
 			}
 		}
@@ -297,5 +318,3 @@ func NewProperties(enableUnKnownFields bool)NewValidatorFunc{
 		return p, nil
 	}
 }
-
-

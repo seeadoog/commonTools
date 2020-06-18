@@ -1,0 +1,17 @@
+{
+  "type": "object",
+  "switch": "name",
+  "case": {
+    "jhon": {
+      "flexProperties": {
+        "name": {
+          "type": "string",
+          "maxLength": 5,
+        }
+      }
+    },
+    "alen": {
+      "required": ["age"]
+    }
+  }
+}

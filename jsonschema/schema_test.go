@@ -8,7 +8,6 @@ import (
 	"testing"
 )
 
-
 var schema2 = []byte(`
 	{
 
@@ -76,30 +75,31 @@ var schema2 = []byte(`
 }
 `)
 
-func TestCreateNew(t *testing.T){
+func TestCreateNew(t *testing.T) {
 	ShowCompletePath = true
 	var f Schema
-	if err:=json.Unmarshal(schema,&f);err != nil{
+	if err := json.Unmarshal(schema, &f); err != nil {
 		panic(err)
 	}
-	iv:=map[string]interface{}{
-		"a":map[string]interface{}{
-			"a1":"dd",
-			"a2":"1",
-			"a3":"1",
-			"a4":"1",
+	iv := map[string]interface{}{
+		"a": map[string]interface{}{
+			"a1": "b",
+			"a2": "1",
+			"a3": "1",
+			"a4": "1",
 		},
-		"b":map[string]interface{}{
-			"a1":"dd",
-			"a2":"1",
-			"a3":"1",
-			"a4":"1",
+		"b": map[string]interface{}{
+			"a1": "dd",
+			"a2": "1",
+			"a3": "1",
+			"a4": "1",
 		},
-		"c":map[string]interface{}{
-			"a1":"1",
-			"a2":"1",
-			"a3":"1",
-			"a4":"5",
+		"c": map[string]interface{}{
+			"a1": "1",
+			"a2": "1",
+			"a3": "1",
+			"a4": "5",
+			"a5": float64(10),
 		},
 		//"age":"4",
 		//"fs":3,
@@ -107,21 +107,20 @@ func TestCreateNew(t *testing.T){
 	}
 	type req struct {
 		Name string `json:"name"`
-		Any string `json:"any"`
+		Any  string `json:"any"`
 	}
-	r:=&req{
+	r := &req{
 		Name: "jake2",
-
 	}
 	var errs error
-	for i:=0;i<1000000;i++{
+	for i := 0; i < 1; i++ {
 		//var errs = []Error{}
-		errs=f.Validate(iv)
+		errs = f.Validate(iv)
 		//errs =f.Validate(r)
 		//fmt.Println(errs)
 
 	}
-	fmt.Println(r,iv,errs)
+	fmt.Println(r, iv, errs)
 
 	//var a  interface{} = 1
 	//var b float64 = 1
@@ -165,12 +164,18 @@ func TestCreateNew(t *testing.T){
 //	}
 //}
 
-var 	schema =[]byte(`
+var schema = []byte(`
 {
 
   "type": "object",
   "properties": {
     "a": {
+      "switch":"a1",
+      "case":{
+			"a":{"required":["b1","c1"]},
+			"b":{"required":["b2","c2"]}
+		},
+		"default":{"required":["c3"]},
       "type": "object",
       "properties": {
         "a1": {
@@ -215,7 +220,7 @@ var 	schema =[]byte(`
       "properties": {
         "a1": {
           "type": "string",
-          "maxLength": 5
+          "maxLength": 0
         },
         "a2": {
           "type": "string"
@@ -226,11 +231,13 @@ var 	schema =[]byte(`
         },
         "a4": {
           "type": "string"
-        }
+        },
+		"a5":{
+			"type":"integer",
+			"maximum":0
+		}
       }
     }
   }
 }
 `)
-
-
