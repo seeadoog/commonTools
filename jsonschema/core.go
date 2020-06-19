@@ -14,7 +14,6 @@ func init() {
 	RegisterValidator("if", NewIf)
 	RegisterValidator("else", NewElse)
 	RegisterValidator("then", NewThen)
-	//RegisterValidator("flexProperties", NewFlexProperties)
 	RegisterValidator("not", NewNot)
 	RegisterValidator("allOf", NewAllOf)
 	RegisterValidator("dependencies", NewDependencies)
@@ -25,6 +24,7 @@ func init() {
 	RegisterValidator(keyCase, NewCases)
 	RegisterValidator(keyDefault, NewDefault)
 	RegisterValidator("formatVal", NewFormatVal)
+	RegisterValidator("format", NewFormat)
 
 }
 
@@ -51,7 +51,7 @@ func RegisterValidator(name string, fun NewValidatorFunc) {
 
 var funcs = map[string]NewValidatorFunc{
 	"type":       NewType,
-	"types":      NewTypes,
+	//"types":      NewTypes,
 	"maxLength":  NewMaxLen,
 	"minLength":  NewMinLen,
 	"maximum":    NewMaximum,
@@ -95,6 +95,9 @@ func (a *ArrProp) Get(key string) Validator {
 func NewProp(i interface{}, path string) (Validator, error) {
 	m, ok := i.(map[string]interface{})
 	if !ok {
+		if _,ok:=i.([]interface{});ok{
+			return NewAnyOf(i,path,nil)
+		}
 		return nil, fmt.Errorf("cannot create prop with not object type: %v,path:%s", i, path)
 	}
 	p := make([]PropItem, len(m))
@@ -110,6 +113,7 @@ func NewProp(i interface{}, path string) (Validator, error) {
 		if funcs[key] == nil {
 			return nil, fmt.Errorf("%s is unknown validator,path=%s", key, path)
 		}
+		// 需要延迟加载
 		if lazyLoads[key] > 0 {
 			p[idx] = PropItem{
 				Key: key,
@@ -133,7 +137,7 @@ func NewProp(i interface{}, path string) (Validator, error) {
 		p[idx] = PropItem{Key: key, Val: vad}
 		idx++
 	}
-
+	// 加载需要延迟加载的属性,比如if ，switch， 需要在依赖的属性else ，then，case ，default 加载完毕后再加载
 	for idx, item := range p {
 		if item.Key == "" {
 			continue
@@ -309,7 +313,7 @@ func NewProperties(enableUnKnownFields bool) NewValidatorFunc {
 				p.replaceKeys[key] = replaceKey
 			}
 
-			format, ok := prop.Get("format").(FormatVal)
+			format, ok := prop.Get("formatVal").(FormatVal)
 			if ok {
 				p.formats[key] = format
 			}

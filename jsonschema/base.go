@@ -115,6 +115,9 @@ type Type struct {
 func (t *Type) Validate(c *ValidateCtx, value interface{}) {
 
 	//t.Val(t.Path,c,value)
+	if value == nil{
+		return
+	}
 
 	switch t.Val {
 
@@ -483,9 +486,9 @@ func NewItems(i interface{}, path string, parent Validator) (Validator, error) {
 	if err != nil {
 		return nil, err
 	}
-	p.(*ArrProp).Path = path + "[?]"
+	p.(*ArrProp).Path = path + "[*]"
 	return &Items{
 		Val:  p.(*ArrProp),
-		Path: path + "[?]",
+		Path: path + "[*]",
 	}, nil
 }

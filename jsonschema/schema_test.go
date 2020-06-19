@@ -83,16 +83,16 @@ func TestCreateNew(t *testing.T) {
 	}
 	iv := map[string]interface{}{
 		"a": map[string]interface{}{
-			"a1": "b",
+			"a1": "c",
 			"a2": "1",
 			"a3": "1",
-			"a4": "1",
+			"a4": []interface{}{},
 		},
 		"b": map[string]interface{}{
-			"a1": "dd",
+			//"a1": "dd",
 			"a2": "1",
 			"a3": "1",
-			"a4": "1",
+			"a4": float64(2),
 		},
 		"c": map[string]interface{}{
 			"a1": "1",
@@ -190,13 +190,18 @@ var schema = []byte(`
           "type": "string",
           "maxLength": 5
         },
-        "a4": {
-          "type": "string"
-        }
+        "a4": {"type": "string|number"}
       }
     },
     "b": {
       "type": "object",
+      "if":{
+			"required":["a1"]
+		},
+		"then":{
+			"required":["b5"]
+		},
+		"else":{"required":["b6"]},
       "properties": {
         "a1": {
           "type": "string",
