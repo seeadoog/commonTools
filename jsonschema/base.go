@@ -43,23 +43,16 @@ var typeFuncs = [...]typeValidateFunc{
 		}
 	},
 	typeObject: func(path string, c *ValidateCtx, value interface{}) {
-		if _, ok := value.(map[string]interface{}); !ok {
-			rt := reflect.ValueOf(value)
-			if rt.Kind() == reflect.Struct {
-				return
-			}
-			if rt.Kind() == reflect.Ptr {
-				if !rt.IsNil() {
-					if rt.Elem().Kind() == reflect.Struct {
-						return
-					}
-				}
-			}
-			c.AddError(Error{
-				Path: path,
-				Info: "type must be object",
-			})
+		switch value.(type) {
+		case map[string]interface{}, map[string]string:
+			return
+		case *struct{}, struct{}:
+			return
 		}
+		c.AddError(Error{
+			Path: path,
+			Info: "type must be object",
+		})
 	},
 	typeInteger: func(path string, c *ValidateCtx, value interface{}) {
 		if _, ok := value.(float64); !ok {
@@ -108,76 +101,17 @@ var typeFuncs = [...]typeValidateFunc{
 }
 
 type Type struct {
-	Path string
-	Val  _type
+	Path         string
+	ValidateFunc typeValidateFunc
 }
 
 func (t *Type) Validate(c *ValidateCtx, value interface{}) {
 
-	//t.Val(t.Path,c,value)
-	if value == nil{
+	//t.ValidateFunc(t.Path,c,value)
+	if value == nil {
 		return
 	}
-
-	switch t.Val {
-
-	case typeString:
-		if _, ok := value.(string); !ok {
-			c.AddError(Error{
-				Path: t.Path,
-				Info: "type must be string",
-			})
-		}
-		return
-	case typeObject:
-		if _, ok := value.(map[string]interface{}); !ok {
-			rt := reflect.ValueOf(value)
-			if rt.Kind() == reflect.Struct {
-				return
-			}
-			if rt.Kind() == reflect.Ptr {
-				if !rt.IsNil() {
-					if rt.Elem().Kind() == reflect.Struct {
-						return
-					}
-				}
-			}
-			c.AddError(Error{
-				Path: t.Path,
-				Info: "type must be object",
-			})
-		}
-		return
-	case typeInteger, typeNumber:
-		if _, ok := value.(float64); !ok {
-			rt := reflect.TypeOf(value)
-			switch rt.Kind() {
-			case reflect.Int, reflect.Int16, reflect.Int8, reflect.Int32, reflect.Int64, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint, reflect.Float32, reflect.Float64:
-				return
-			}
-			c.AddError(Error{
-				Path: t.Path,
-				Info: "type must be number",
-			})
-		}
-		return
-	case typeBool:
-		if _, ok := value.(bool); !ok {
-			c.AddError(Error{
-				Path: t.Path,
-				Info: "type must be boolean",
-			})
-		}
-		return
-	case typeArray:
-		if _, ok := value.([]interface{}); !ok {
-			c.AddError(Error{
-				Path: t.Path,
-				Info: "type must be array",
-			})
-		}
-		return
-	}
+	t.ValidateFunc(t.Path, c, value)
 }
 
 func NewType(i interface{}, path string, parent Validator) (Validator, error) {
@@ -196,8 +130,8 @@ func NewType(i interface{}, path string, parent Validator) (Validator, error) {
 	}
 
 	return &Type{
-		Val:  t,
-		Path: path,
+		ValidateFunc: typeFuncs[t],
+		Path:         path,
 	}, nil
 }
 
@@ -354,7 +288,7 @@ func (m *Maximum) Validate(c *ValidateCtx, value interface{}) {
 	if !ok {
 		return
 	}
-	if val > float64(m.Val) {
+	if val > m.Val {
 		c.AddError(Error{
 			Info: appendString("value must be <=", strconv.FormatFloat(float64(m.Val), 'f', -1, 64)),
 			Path: m.Path,
@@ -442,14 +376,30 @@ func NewRequired(i interface{}, path string, parent Validator) (Validator, error
 	if !ok {
 		return nil, fmt.Errorf("value of 'required' must be array:%v", i)
 	}
+	var properties *Properties
+	ap, ok := parent.(*ArrProp)
+	if ok {
+		pptis, ok := ap.Get("properties").(*Properties)
+		if ok {
+			properties = pptis
+		}
+	}
 	req := make([]string, len(arr))
 	for idx, item := range arr {
 		itemStr, ok := item.(string)
 		if !ok {
 			return nil, fmt.Errorf("value of 'required item' must be string:%v of %v", item, i)
 		}
+		if properties != nil && !properties.EnableUnknownField {
+			if _, ok := properties.properties[itemStr]; !ok {
+				return nil, fmt.Errorf("required '%s' is not defined in propertis! path:%s", itemStr, path)
+			}
+		}
+
 		req[idx] = itemStr
+
 	}
+
 	return &Required{
 		Val:  req,
 		Path: path,

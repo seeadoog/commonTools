@@ -83,23 +83,24 @@ func TestCreateNew(t *testing.T) {
 	}
 	iv := map[string]interface{}{
 		"a": map[string]interface{}{
-			"a1": "c",
+			"a1": "",
 			"a2": "1",
 			"a3": "1",
-			"a4": []interface{}{},
+			"a4": 1,
 		},
 		"b": map[string]interface{}{
 			//"a1": "dd",
 			"a2": "1",
 			"a3": "1",
-			"a4": float64(2),
+			"a4": "",
+			"b6": "",
 		},
 		"c": map[string]interface{}{
-			"a1": "1",
+			"a1": "",
 			"a2": "1",
 			"a3": "1",
 			"a4": "5",
-			"a5": float64(10),
+			"a5": float64(0),
 		},
 		//"age":"4",
 		//"fs":3,
@@ -113,7 +114,7 @@ func TestCreateNew(t *testing.T) {
 		Name: "jake2",
 	}
 	var errs error
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 100000; i++ {
 		//var errs = []Error{}
 		errs = f.Validate(iv)
 		//errs =f.Validate(r)
@@ -121,7 +122,7 @@ func TestCreateNew(t *testing.T) {
 
 	}
 	fmt.Println(r, iv, errs)
-
+	//jsonschema.Properties{}
 	//var a  interface{} = 1
 	//var b float64 = 1
 	//fmt.Println(reflect.DeepEqual(a,b))
@@ -175,7 +176,7 @@ var schema = []byte(`
 			"a":{"required":["b1","c1"]},
 			"b":{"required":["b2","c2"]}
 		},
-		"default":{"required":["c3"]},
+		"default":{},
       "type": "object",
       "properties": {
         "a1": {
@@ -217,12 +218,15 @@ var schema = []byte(`
         },
         "a4": {
           "type": "string"
+        },
+        "b6": {
+          "type": "string"
         }
       }
     },
     "c": {
       "type": "object",
-      "properties": {
+      "flexProperties": {
         "a1": {
           "type": "string",
           "maxLength": 0

@@ -8,17 +8,22 @@ import (
 	"sync"
 	"time"
 )
-var DefaultDnsCache = NewDnsCache(20*time.Second)
 
+var DefaultDnsCache = NewDnsCache(20 * time.Second)
 
 type DnsCache struct {
-	cache         sync.Map   //ip 地址缓存
-	freshInterval time.Duration // dns 刷新时间
-	timer         *time.Ticker
-	httpClient    *http.Client
+	cache          sync.Map      //ip 地址缓存
+	freshInterval  time.Duration // dns 刷新时间
+	timer          *time.Ticker
+	httpClient     *http.Client
+	customResolver func(string) (string, error)
 }
 
-func (d *DnsCache)DialFunc()func(network, addr string) (net.Conn, error){
+func (d *DnsCache) SetCustomeResolver(f func(host string) (ip string, err error)) {
+	d.customResolver = f
+}
+
+func (d *DnsCache) DialFunc() func(network, addr string) (net.Conn, error) {
 	return d.dialFunc
 }
 
@@ -41,7 +46,7 @@ func NewDnsCache(freshInterval time.Duration) *DnsCache {
 	}
 	c.timer = time.NewTicker(freshInterval)
 	c.httpClient = &http.Client{
-		Transport:&http.Transport{
+		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
 
 			ForceAttemptHTTP2:     true,
@@ -49,7 +54,7 @@ func NewDnsCache(freshInterval time.Duration) *DnsCache {
 			IdleConnTimeout:       90 * time.Second,
 			TLSHandshakeTimeout:   10 * time.Second,
 			ExpectContinueTimeout: 1 * time.Second,
-			Dial: c.DialFunc(),
+			Dial:                  c.DialFunc(),
 		},
 	}
 	go c.freshDns()
@@ -57,6 +62,13 @@ func NewDnsCache(freshInterval time.Duration) *DnsCache {
 }
 
 func (d *DnsCache) resolveIp(host string) (string, error) {
+	if d.customResolver != nil {
+		ip, err := d.customResolver(host)
+		if err == nil {
+			d.cache.Store(host, ip)
+			return ip, nil
+		}
+	}
 	ip, err := net.ResolveIPAddr("ip4", host)
 	if err != nil {
 		return "", fmt.Errorf("resolve ip of %s error:%w", host, err)
@@ -97,10 +109,10 @@ func (d *DnsCache) freshDns() {
 	}
 }
 
-func (d *DnsCache) DoHttpRequest(req *http.Request) (*http.Response,error){
+func (d *DnsCache) DoHttpRequest(req *http.Request) (*http.Response, error) {
 	return d.httpClient.Do(req)
 }
 
-func (d *DnsCache)HttpClient()*http.Client{
+func (d *DnsCache) HttpClient() *http.Client {
 	return d.httpClient
 }

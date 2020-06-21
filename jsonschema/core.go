@@ -35,8 +35,9 @@ var ignoreKeys = map[string]int{
 }
 
 var lazyLoads = map[string]int{
-	"switch": 1,
-	"if":     1,
+	"switch":   1,
+	"if":       1,
+	"required": 1,
 }
 
 func AddIgnoreKeys(key string) {
@@ -50,7 +51,7 @@ func RegisterValidator(name string, fun NewValidatorFunc) {
 }
 
 var funcs = map[string]NewValidatorFunc{
-	"type":       NewType,
+	"type": NewType,
 	//"types":      NewTypes,
 	"maxLength":  NewMaxLen,
 	"minLength":  NewMinLen,
@@ -95,8 +96,8 @@ func (a *ArrProp) Get(key string) Validator {
 func NewProp(i interface{}, path string) (Validator, error) {
 	m, ok := i.(map[string]interface{})
 	if !ok {
-		if _,ok:=i.([]interface{});ok{
-			return NewAnyOf(i,path,nil)
+		if _, ok := i.([]interface{}); ok {
+			return NewAnyOf(i, path, nil)
 		}
 		return nil, fmt.Errorf("cannot create prop with not object type: %v,path:%s", i, path)
 	}
@@ -143,7 +144,7 @@ func NewProp(i interface{}, path string) (Validator, error) {
 			continue
 		}
 		if lazyLoads[item.Key] > 0 {
-			vad, err := funcs[item.Key](m[item.Key], item.Key, arr)
+			vad, err := funcs[item.Key](m[item.Key], path, arr)
 			if err != nil {
 				return nil, err
 			}

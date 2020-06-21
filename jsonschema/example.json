@@ -3,15 +3,26 @@
   "switch": "name",
   "case": {
     "jhon": {
-      "flexProperties": {
-        "name": {
-          "type": "string",
-          "maxLength": 5,
-        }
+        "setVal": {
+          "all_name": {
+            "func": "append",
+            "args": ["${name}","${age}"]
+          }
       }
     },
     "alen": {
       "required": ["age"]
+    }
+  },
+  "if": {
+    "keyMatch": {
+      "ln": "1",
+      "dn": "2"
+    }
+  },
+  "then": {
+    "setVal": {
+      "et": "6757"
     }
   }
 }

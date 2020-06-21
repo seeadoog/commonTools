@@ -243,7 +243,7 @@ func (k *KeyMatch) Validate(c *ValidateCtx, value interface{}) {
 	if !ok {
 		c.AddError(Error{
 			Path: k.Path,
-			Info: "val is not object",
+			Info: "value is not object",
 		})
 	}
 	for key, want := range k.Val {

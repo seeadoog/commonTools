@@ -6,10 +6,10 @@ import (
 	"testing"
 )
 
-func TestMap(t *testing.T){
-	a:=&R{}
-	for i:=0 ;i<10000000;i++{
-		a= &R{
+func TestMap(t *testing.T) {
+	a := &R{}
+	for i := 0; i < 10000000; i++ {
+		a = &R{
 			A: map[string]interface{}{},
 			B: map[string]interface{}{},
 			C: map[string]interface{}{},
@@ -20,9 +20,9 @@ func TestMap(t *testing.T){
 	fmt.Println(a)
 }
 
-func clearMap(m map[string]interface{}){
+func clearMap(m map[string]interface{}) {
 	for k := range m {
-		delete(m,k)
+		delete(m, k)
 	}
 }
 
@@ -31,7 +31,6 @@ type R struct {
 	B map[string]interface{} `json:"b"`
 	C map[string]interface{} `json:"c"`
 }
-
 
 var js = []byte(`
 {
@@ -53,22 +52,23 @@ var js = []byte(`
   }
 }
 `)
-func TestMap2(t *testing.T){
+
+func TestMap2(t *testing.T) {
 
 	var pool = sync.Pool{}
 
-	a:=&R{}
-	for i:=0 ;i<1000000;i++{
-		m:= pool.Get()
-		if m==nil{
+	a := &R{}
+	for i := 0; i < 1000000; i++ {
+		m := pool.Get()
+		if m == nil {
 			a = &R{
 				A: map[string]interface{}{
-					"e":1,
+					"e": 1,
 				},
 				B: map[string]interface{}{},
 				C: map[string]interface{}{},
 			}
-		}else{
+		} else {
 			a = m.(*R)
 			clearMap(a.A)
 			clearMap(a.B)
@@ -79,4 +79,11 @@ func TestMap2(t *testing.T){
 		//fmt.Println(a.A)
 		pool.Put(a)
 	}
+}
+
+//go:generate stringer -type=S
+type S []int
+
+func TestStringer(t *testing.T) {
+
 }

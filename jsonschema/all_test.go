@@ -6,25 +6,25 @@ import (
 	"testing"
 )
 
-func validate(schema ,js string){
-	sc:=&Schema{}
-	if err:=json.Unmarshal([]byte(schema),sc);err != nil{
+func validate(schema, js string) {
+	sc := &Schema{}
+	if err := json.Unmarshal([]byte(schema), sc); err != nil {
 		panic(err)
 	}
 	var i interface{}
-	if err:=json.Unmarshal([]byte(js),&i);err != nil{
+	if err := json.Unmarshal([]byte(js), &i); err != nil {
 		panic(err)
 	}
 
-	if err:=sc.Validate(i);err != nil{
+	if err := sc.Validate(i); err != nil {
 		fmt.Println(err)
 	}
-	b,_:=json.Marshal(i)
-	fmt.Println("after=>",string(b))
+	b, _ := json.Marshal(i)
+	fmt.Println("after=>", string(b))
 }
 
-func TestBase(t *testing.T){
-	schema:=`
+func TestBase(t *testing.T) {
+	schema := `
 {
 	"type":"object",
 	"properties":{
@@ -43,10 +43,51 @@ func TestBase(t *testing.T){
 }
 `
 
-	js:=`
+	js := `
 {
 	"name":"15029332345"
 }
 `
-	validate(schema,js)
+	validate(schema, js)
+}
+
+func TestMagic(t *testing.T) {
+	schema := `
+{
+  "type": "object",
+  "switch": "name",
+  "case": {
+    "jhon": {
+        "setVal": {
+          "all_name": {
+            "func": "append",
+            "args": ["${name}","_","${age}"]
+          }
+      }
+    },
+    "alen": {
+      "required": ["age"]
+    }
+  },
+  "if":{
+		"keyMatch":{
+			"name":"jhon",
+			"age":5
+		}
+	},
+	"then":{
+		"required":["age2"],
+		"setVal":{
+			"name_coy":"${name}"
+		}
+	}
+}
+`
+	validate(schema, `
+{
+	"name":"jhon",
+	"age":5
+}
+
+`)
 }

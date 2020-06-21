@@ -1,11 +1,36 @@
-## jsonschema
+## jsonschema 
+
+- golang 最快的jsonschema 实现。性能超越qri-io/jsonschema 10 倍+
+- 支持字段类型转化。
  
 #### type  限定字段类型
 
-取值范围：string integer number bool object array
+取值范围：string  number bool object array
+```json
+{
+  "type": "string"
+}
+```
+或者
+```json
+{
+  "type": "string|number"
+}
+```
 
 #### properties 
 当值为object 时起作用。限定object 中字段的模式，不允许出现properties 中未定义的字段
+
+```json
+ {
+  "type": "object",
+  "properties": {
+    "name": {
+        "type": "string"
+    }
+  }
+}
+```
 
 #### flexProperties
 
@@ -53,7 +78,7 @@
 
 ````json
 {
-  "type": "array",
+  "type": "string",
   "pattern": "^\\d+$"
 }
 ````
@@ -75,3 +100,36 @@
   }
 }
 ```
+
+#### switch 
+当switch中的key的值满足case 中制定的值时，执行case中对应的校验器。如果都不满足，则执行default中的校验器
+```json
+
+{
+  "switch": "name",
+   "case": {
+      "name1": {
+        "required": ["age1"]
+      } ,
+      "name2": {
+          "required": ["age2"]
+      } 
+
+   },
+   "default": {
+      "required": ["key3"]
+   }
+}
+
+```
+
+#### if
+ 当if 中的校验器没有任何错误时，执行then中的校验器，否则执行else中的校验器。 if中的错误不会抛出
+ ```json
+{
+  "if": {"required": "key1"},
+  "then":{"required": "key2"},
+  "else": {"required": "key3"}
+}
+```
+

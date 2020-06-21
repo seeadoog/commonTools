@@ -1,50 +1,9 @@
-package jsonschema
+package script
 
 import (
 	"fmt"
 	"strconv"
-	"strings"
 )
-
-type Error struct {
-	Path string
-	Info string
-}
-type ValidateCtx struct {
-	errors []Error
-}
-
-func (v *ValidateCtx) AddError(e Error) {
-	v.errors = append(v.errors, e)
-}
-
-func (v *ValidateCtx) AddErrors(e ...Error) {
-	for i, _ := range e {
-		v.AddError(e[i])
-	}
-}
-
-func (v *ValidateCtx) Clone() *ValidateCtx {
-	return &ValidateCtx{}
-}
-
-type Validator interface {
-	Validate(c *ValidateCtx, value interface{})
-}
-
-type NewValidatorFunc func(i interface{}, path string, parent Validator) (Validator, error)
-
-func appendString(s ...string) string {
-	sb := strings.Builder{}
-	for _, str := range s {
-		sb.WriteString(str)
-	}
-	return sb.String()
-}
-
-func panicf(f string, args ...interface{}) {
-	panic(fmt.Sprintf(f, args...))
-}
 
 func String(v interface{}) string {
 	switch v.(type) {
@@ -99,4 +58,59 @@ func Bool(v interface{}) bool {
 }
 func Equal(a, b interface{}) bool {
 	return String(a) == String(b)
+}
+
+type Error struct {
+	Message string
+}
+
+func Errorf(s string, args ...interface{}) *Error {
+	return &Error{
+		Message: fmt.Sprintf(s, args...),
+	}
+}
+
+type Context struct {
+	kvs    map[string]interface{}
+	parent *Context
+}
+
+func (c *Context) Set(key string, val interface{}) bool {
+	_, ok := c.kvs[key]
+	if ok {
+		c.kvs[key] = val
+		return true
+	}
+	if c.parent != nil {
+		if c.parent.Set(key, val) {
+			return true
+		}
+	}
+	c.kvs[key] = val
+	return true
+}
+func (c *Context) Get(key string) interface{} {
+	v, ok := c.kvs[key]
+	if ok {
+		return v
+	}
+	if c.parent != nil {
+		return c.parent.Get(key)
+	}
+	return nil
+}
+
+func (c *Context) Next() *Context {
+	return &Context{
+		kvs:    map[string]interface{}{},
+		parent: c,
+	}
+}
+
+type Value interface {
+	Get(c *Context) interface{}
+}
+
+type Expression interface {
+	Exec(c *Context) *Error
 }
