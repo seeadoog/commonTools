@@ -94,6 +94,10 @@ func Bool(v interface{}) bool {
 		return v.(string) == "true"
 	case bool:
 		return v.(bool)
+	default:
+		if Number(v) > 0{
+			return true
+		}
 	}
 	return false
 }

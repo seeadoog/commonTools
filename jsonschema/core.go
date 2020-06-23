@@ -165,7 +165,6 @@ type Properties struct {
 	EnableUnknownField bool
 }
 
-var ShowCompletePath bool
 
 func (p *Properties) Validate(c *ValidateCtx, value interface{}) {
 	if value == nil {
