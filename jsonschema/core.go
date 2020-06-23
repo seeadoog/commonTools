@@ -175,11 +175,13 @@ func (p *Properties) Validate(c *ValidateCtx, value interface{}) {
 	if m, ok := value.(map[string]interface{}); ok {
 		for k, v := range m {
 			pv := p.properties[k]
-			if pv == nil && !p.EnableUnknownField {
-				c.AddError(Error{
-					Path: appendString(p.Path, ".", k),
-					Info: "unknown field",
-				})
+			if pv == nil {
+				if !p.EnableUnknownField{
+					c.AddError(Error{
+						Path: appendString(p.Path, ".", k),
+						Info: "unknown field",
+					})
+				}
 				continue
 			}
 			pv.Validate(c, v)
