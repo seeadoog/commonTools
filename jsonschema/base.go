@@ -46,9 +46,13 @@ var typeFuncs = [...]typeValidateFunc{
 		switch value.(type) {
 		case map[string]interface{}, map[string]string:
 			return
-		case *struct{}, struct{}:
-			return
+		default:
+			ty:=reflect.TypeOf(value)
+			if ty.Kind() == reflect.Ptr || ty.Kind() == reflect.Struct ||ty.Kind() == reflect.Map{
+				return
+			}
 		}
+
 		c.AddError(Error{
 			Path: path,
 			Info: "type must be object",
@@ -117,7 +121,7 @@ func (t *Type) Validate(c *ValidateCtx, value interface{}) {
 func NewType(i interface{}, path string, parent Validator) (Validator, error) {
 	iv, ok := i.(string)
 	if !ok {
-		return nil, fmt.Errorf("value of 'type' must be string! v:%v", i)
+		return nil, fmt.Errorf("value of 'type' must be string! v:%v,path:%s", i,path)
 	}
 	ivs := strings.Split(iv, "|")
 	if len(ivs) > 1 {

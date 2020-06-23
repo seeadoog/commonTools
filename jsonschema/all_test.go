@@ -3,6 +3,7 @@ package jsonschema
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -23,6 +24,31 @@ func validate(schema, js string) {
 	fmt.Println("after=>", string(b))
 }
 
+func TestStruct(t *testing.T){
+	sc:=`
+{
+	"type":"object"
+}
+`
+	s:=&Schema{}
+	err:=json.Unmarshal([]byte(sc),s)
+	fmt.Println(err)
+	type A struct {
+
+	}
+	i:=A{}
+	tt(i)
+
+	fmt.Println(s.Validate(i))
+}
+func tt(i interface{}){
+	switch i.(type) {
+	case struct{}:
+		fmt.Println("----")
+	default:
+		fmt.Println(reflect.TypeOf(i))
+	}
+}
 func TestBase(t *testing.T) {
 	schema := `
 {

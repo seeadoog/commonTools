@@ -43,6 +43,11 @@ func (s *Schema)Validate(i interface{})error{
 	return errors.New(errsToString(c.errors))
 }
 
+func (s *Schema)ValidateError(i interface{})[]Error{
+	c:=&ValidateCtx{}
+	s.prop.Validate(c,i)
+	return c.errors
+}
 
 
 func errsToString(errs []Error)string{

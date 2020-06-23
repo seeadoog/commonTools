@@ -100,3 +100,4 @@ func Bool(v interface{}) bool {
 func Equal(a, b interface{}) bool {
 	return String(a) == String(b)
 }
+
