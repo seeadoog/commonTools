@@ -133,3 +133,14 @@
 }
 ```
 
+#### dependencies
+
+当传了某个值时，必须传某些值
+
+```json
+{
+  "dependencies": {
+      "key1": ["key2","key3"]
+}
+}
+```

@@ -1,4 +1,4 @@
-package schemas
+package simplehttp
 
 import (
 	"encoding/json"
@@ -47,6 +47,8 @@ func (e *JsonElement)GetIndex(idx int)*JsonElement{
 	}
 	return nil
 }
+
+
 
 
 func (e *JsonElement)Set(key string,val interface{})(error){

@@ -1,4 +1,4 @@
-package netproto
+package localrpc
 
 type Request interface {
 
@@ -8,10 +8,13 @@ type Response interface {
 
 }
 
+type Handler func(request Message)(Message,error)
+
 type Server interface {
-	Call(funcName string,request Request)(Response,error)
+	Start()error
+	HandleFunc(handler Handler)
 }
 
 type Client interface {
-	Call(funcName string,request Request)(Response,error)
+	Call(funcName string,request Message)(Message,error)
 }

@@ -76,7 +76,6 @@ var schema2 = []byte(`
 `)
 
 func TestCreateNew(t *testing.T) {
-	ShowCompletePath = true
 	var f Schema
 	if err := json.Unmarshal(schema, &f); err != nil {
 		panic(err)
@@ -114,7 +113,7 @@ func TestCreateNew(t *testing.T) {
 		Name: "jake2",
 	}
 	var errs error
-	for i := 0; i < 100000; i++ {
+	for i := 0; i < 1; i++ {
 		//var errs = []Error{}
 		errs = f.Validate(iv)
 		//errs =f.Validate(r)

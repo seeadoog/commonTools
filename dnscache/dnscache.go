@@ -40,7 +40,7 @@ func (d *DnsCache) dialFunc(network, addr string) (net.Conn, error) {
 	return net.Dial("tcp4", fmt.Sprintf("%s:%s", ip, ips[1]))
 }
 
-func NewDnsCache(freshInterval time.Duration) *DnsCache {
+func NewDnsCache(freshInterval time.Duration,hosts ...string) *DnsCache {
 	c := &DnsCache{
 		freshInterval: freshInterval,
 	}
@@ -56,6 +56,9 @@ func NewDnsCache(freshInterval time.Duration) *DnsCache {
 			ExpectContinueTimeout: 1 * time.Second,
 			Dial:                  c.DialFunc(),
 		},
+	}
+	for _, host := range hosts {
+		c.resolveIp(host)
 	}
 	go c.freshDns()
 	return c

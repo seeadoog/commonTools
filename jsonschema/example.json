@@ -24,5 +24,8 @@
     "setVal": {
       "et": "6757"
     }
+  },
+  "dependencies": {
+    "personal": ["res_id1","res_id2"]
   }
 }
