@@ -1,8 +1,9 @@
 package ngcfg
 
 import (
+	"encoding/json"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"testing"
 )
 
@@ -72,8 +73,117 @@ func Test_parse(t *testing.T) {
 
 }
 
-type HttpScanner struct {
-	r io.Reader
-	buf []byte
+
+type Config struct {
+	Common struct{
+
+	} `json:"common"`
+	Server struct{
+		Listen string `json:"listen"`
+		Options map[string]string `json:"options"`
+		Ports []string `json:"ports"`
+	} `json:"server"`
+	
+	Kvs []map[string]string `json:"kvs"`
+	
+	Kgs []*Kgs `json:"kgs"`
 }
 
+type Kgs struct {
+	Name string `json:"name"`
+	Age int `json:"age"`
+}
+
+func TestParseCfg(t *testing.T){
+	b,err:=ioutil.ReadFile("test.cfg")
+	if err != nil{
+		panic(err)
+	}
+	c:=&Config{}
+	fmt.Println(UnmarshalFromBytes(b,c))
+	fmt.Println(c)
+}
+
+type Server struct {
+	Proto string `json:"proto"`
+	Listen []string `json:"listen"`
+	AccessByLua string `json:"access_by_lua"`
+}
+
+type Upstream struct {
+	Hosts []string `json:"hosts"`
+	Targets []string `json:"targets"`
+}
+
+type Mysql struct {
+	Addr string `json:"addr"`
+	Password string `json:"password"`
+}
+type Redis struct {
+	Addr string `json:"addr"`
+	Password string `json:"password"`
+}
+
+type Storage struct {
+	Redis Redis `json:"redis"`
+	Mysql Mysql `json:"mysql"`
+}
+type NginxServer struct {
+	WorkerProcess int `json:"worker_process"`
+	Server *Server `json:"server"`
+	Upstreams []Upstream `json:"upstreams"`
+	Storage *Storage `json:"storage"`
+	Args map[string]string `json:"args"`
+}
+
+func TestDemo(t *testing.T){
+	c:=&NginxServer{}
+	cfg:=`
+worker_process 5  #进程数量       
+server{
+    proto   http   # protocols
+    # listen addrs 
+    listen  0.0.0.0:8000 0.0.0.0:8001 0.0.0.0:8002 \
+            0.0.0.0:8003 0.0.0.0:8004 0.0.0.0:8005
+    
+    access_by_lua "
+        ngx.log.info('access',\"user\")
+
+    "
+
+}
+upstreams{ # 如果upstream 模版是数组，那么server 就会被当作数组元素处理，忽略key，但是key 不能重复
+    server1{
+        hosts www.test.com www.test.cn
+        targets 192.168.23.12:9004 192.168.23.12:9003 "a.b.c ee"
+    }
+    server2{
+        hosts www.test2.com www.test2.cn
+        targets 192.168.23.12:9004 192.168.23.12:9003
+    }
+}
+
+storage{
+    mysql{
+        addr 192.33.22.22
+        password 123456
+    }
+    
+    redis{
+        addr 192.33.22.22
+        password 123456
+    }
+}
+
+args {
+}
+
+	`
+	if err:=UnmarshalFromBytes([]byte(cfg),c);err != nil{
+		panic(err)
+	}
+
+	b,_:=json.Marshal(c)
+	fmt.Println(string(b))
+
+}

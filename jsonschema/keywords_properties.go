@@ -35,6 +35,7 @@ func (m *MinProperties) Validate(c *ValidateCtx, value interface{}) {
 			})
 		}
 	}
+
 }
 
 

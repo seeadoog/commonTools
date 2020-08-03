@@ -23,6 +23,8 @@ func NewLinkedMap()*LinkedMap{
 	}
 	m.front = new(MapElem)
 	m.back = new(MapElem)
+	m.front.l = m
+	m.back.l = m
 	m.front.next = m.back
 	m.back.pre = m.front
 	return m
