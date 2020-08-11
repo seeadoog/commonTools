@@ -129,6 +129,7 @@ type Storage struct {
 	Mysql Mysql `json:"mysql"`
 }
 type NginxServer struct {
+	CfgJson string `json:"cfg_json"`
 	WorkerProcess int `json:"worker_process"`
 	Server *Server `json:"server"`
 	Upstreams []Upstream `json:"upstreams"`
@@ -143,8 +144,8 @@ worker_process 5  #进程数量
 server{
     proto   http   # protocols
     # listen addrs 
-    listen  0.0.0.0:8000 0.0.0.0:8001 0.0.0.0:8002 \
-            0.0.0.0:8003 0.0.0.0:8004 0.0.0.0:8005
+    listen  0.0.0.0:8000 0.0.0.0:8001 0.0.0.0:8002 \ 
+            0.0.0.0:8003 0.0.0.0:8004 0.0.0.0:8005  # ffff
     
     access_by_lua "
         ngx.log.info('access',\"user\")
@@ -172,13 +173,16 @@ storage{
     redis{
         addr 192.33.22.22
         password 123456
-    }
+	}
 }
+
+"cfg_json" '{"name":"string"}'
 
 args {
-}
 
-	`
+	"sdfsdf"  sdfsdf
+	"#ffsd sfd" sdfsff
+}`
 	if err:=UnmarshalFromBytes([]byte(cfg),c);err != nil{
 		panic(err)
 	}

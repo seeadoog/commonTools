@@ -13,24 +13,6 @@ aad{
 
  */
 
-
-type Instruct struct {
-	Name string
-	value []string
-}
-
-const(
-	statBegin = iota
-	statContinue
-	statStringBg
-	statStringEd
-	statAnno
-	statSacnKey
-	statStartBlock
-	statEndBlock
-
-)
-
 const(
 	valueLine = iota
 	valueObject
@@ -70,7 +52,7 @@ func parse(b []byte)(*Elem,error){
 		}
 	}
 	if sc.stack.Len() != 1{
-		return nil,fmt.Errorf("} does not match {")
+		return nil,fmt.Errorf("'}' does not match '{'")
 	}
 	return sc.stack.Front().Value.(*Elem),nil
 }
@@ -78,7 +60,7 @@ func parse(b []byte)(*Elem,error){
 //}
 func stepObEnd(s *scanner)error{
 	if s.stack.Len() <=1{
-		return fmt.Errorf("invalid end }:at line:%d rank:%d",s.line,s.rank)
+		return fmt.Errorf("invalid end '}':at line:%d rank:%d",s.line,s.rank)
 	}
 	s.cvt = valueObject
 	s.stack.Remove(s.stack.Back())
@@ -92,7 +74,7 @@ func stepBegin(s *scanner,c byte)error{
 	}
 	switch c {
 	case '{':
-		return fmt.Errorf("invalid begin value:{, line:%d,rank:%d",s.line,s.rank)
+		return fmt.Errorf("invalid begin value:'{', line:%d,rank:%d",s.line,s.rank)
 	case '#':
 		s.step = stepAnno
 		return nil
@@ -103,6 +85,11 @@ func stepBegin(s *scanner,c byte)error{
 		return nil
 	case '}':
 		return stepObEnd(s)
+	case '"':
+		s.step = stepInstring
+		s.cvt = valueLine
+		return nil
+
 	}
 	s.cvt = valueLine
 	s.tk = append(s.tk,c)
@@ -124,7 +111,7 @@ func stepEndOb(s *scanner,c byte)error{
 	case '\n':
 		return stepEscap2(s)
 	}
-	return fmt.Errorf("invalid c after },line:%d rank:%d",s.line,s.rank)
+	return fmt.Errorf("invalid c after '}',line:%d rank:%d",s.line,s.rank)
 }
 
 func isSpace(c byte)bool{
@@ -151,14 +138,14 @@ func stepContinue(s *scanner,c byte)error{
 	case '\n':
 		return stepEscap2(s)
 	case '}':
-		  return fmt.Errorf("invalid } at start block line:%d,rank:%d",s.line,s.rank)
+		  return fmt.Errorf("invalid '}' at start block line:%d,rank:%d",s.line,s.rank)
 	case '{':
 		s.cvt = valueObject
 		e:=NewElem()
 		tope:=s.stack.Back().Value.(*Elem)
 		appendLine(s)
 		if len(s.ltks)!=1{
-			return fmt.Errorf("invalid begin value of {,line:%d,rank:%d",s.line,s.rank)
+			return fmt.Errorf("invalid begin value of '{',line:%d,rank:%d",s.line,s.rank)
 		}
 		key:= s.ltks[0]
 		if err:=tope.Set(key,e);err != nil{
@@ -175,6 +162,9 @@ func stepContinue(s *scanner,c byte)error{
 	case '"':
 		s.step = stepInstring
 		return nil
+	case '\'':
+		s.step = stepInstring2
+		return nil
 	}
 	if isSpace(c){
 		if len(s.tk) >0{
@@ -187,6 +177,7 @@ func stepContinue(s *scanner,c byte)error{
 	s.step = stepContinue
 	return nil
 }
+//" " 类型的string
 func stepInstring(s *scanner,c byte)error{
 	if c == '\n'{
 		s.setLine()
@@ -203,13 +194,36 @@ func stepInstring(s *scanner,c byte)error{
 	s.tk = append(s.tk,c)
 	return nil
 }
+// ' ' 类型的string
+func stepInstring2(s *scanner,c byte)error{
+	if c == '\n'{
+		s.setLine()
+	}
+	if c == '\\'{
+		s.step = stepEcpNext2
+		return nil
+	}
+
+	if c == '\''{
+		s.step =stepContinue
+		return nil
+	}
+	s.tk = append(s.tk,c)
+	return nil
+}
 
 func stepEcpNext(s *scanner,c byte)error{
 	s.tk = append(s.tk,c)
 	s.step =stepInstring
 	return nil
 }
+func stepEcpNext2(s *scanner,c byte)error{
+	s.tk = append(s.tk,c)
+	s.step =stepInstring2
+	return nil
+}
 
+//忽略当前换行符，应对配置行过长的情况
 func stepEcpSep(s *scanner,c byte)error{
 	if isSpace(c){
 		return nil
@@ -218,12 +232,14 @@ func stepEcpSep(s *scanner,c byte)error{
 	case '\r','\n':
 		if c=='\n'{
 			s.setLine()
+			s.step = stepContinue
 		}
 		return nil
 	default:
-		if err:=stepContinue(s,c);err !=nil{
-			return err
-		}
+		//if err:=stepContinue(s,c);err !=nil{
+		//	return err
+		//}
+		return fmt.Errorf("invalid c after \\ ,line:%d,rank:%d",s.line,s.rank)
 		//s.step = stepContinue
 	}
 	return nil
@@ -243,7 +259,7 @@ func stepStartObject(s *scanner,c byte)error{
 	case '\n':
 		return stepEscap2(s)
 	}
-	return fmt.Errorf("invalid %v after {", rune(c))
+	return fmt.Errorf("invalid c after '{' in start object block ,at:line%d,rank:%d", s.line,s.rank)
 }
 
 func stepAnno(s *scanner,c byte)error{

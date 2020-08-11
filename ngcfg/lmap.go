@@ -1,5 +1,5 @@
 package ngcfg
-
+// 有序map
 type MapElem struct {
 	Key  string
 	Val  interface{}
@@ -27,6 +27,7 @@ func NewLinkedMap()*LinkedMap{
 	m.back.l = m
 	m.front.next = m.back
 	m.back.pre = m.front
+
 	return m
 }
 
@@ -34,7 +35,11 @@ type LinkedMap struct {
 	data map[string]*MapElem
 	front *MapElem
 	back *MapElem
+	iterNode *MapElem
+
 }
+
+
 
 func (m *LinkedMap)Len()int{
 	return len(m.data)
@@ -70,4 +75,28 @@ func (m *LinkedMap)Get(key string)(interface{},bool){
 
 func (m *LinkedMap)MapItem()*MapElem{
 	return m.front.next
+}
+
+
+func (m *LinkedMap)Iterator()Iterator{
+	  m.iterNode = m.front.next
+      return m
+}
+
+func (m *LinkedMap) HasNext() bool {
+	 if m.iterNode ==m.back || m.iterNode == nil{
+	 	return false
+	 }
+	 return true
+}
+
+func (m *LinkedMap) Next() *MapElem {
+	v:=m.iterNode
+	m.iterNode = m.iterNode.next
+	return v
+}
+
+type Iterator interface {
+	HasNext()bool
+	Next()*MapElem
 }
