@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 	"unsafe"
 )
@@ -60,6 +61,10 @@ func (r *Request) PATCH() *Request {
 	return r
 }
 
+func (r *Request)Auth(apikey string,apisecret string)*Request{
+	r.Headers(AssemblyRequestHeader(r.url,r.method,apikey,apisecret,nil))
+	return r
+}
 
 func (r *Request) Url(u string) *Request {
 	r.url = u
@@ -130,7 +135,15 @@ func (r *Request) Header(key, val string) *Request {
 	r.headers[key] = val
 	return r
 }
-
+func (r *Request)Headers(hs map[string]string)*Request{
+	if len(r.errors) > 0 {
+		return r
+	}
+	for k, v := range hs {
+		r.headers[k] = v
+	}
+	return r
+}
 func (r *Request) Client(c *http.Client) *Request {
 	r.client = c
 	return r
@@ -272,7 +285,40 @@ func (r *Response) Into(v interface{}) error {
 	return nil
 }
 
+func (r *Response)OK(c func()error)error{
+	if c == nil{
+		return r.Err()
+	}
+	if err:=c();err != nil{
+		r.errors = append(r.errors,err)
+	}
+	return r.Err()
+}
 
+func (r *Response)Header(key string)string{
+	if r.header != nil{
+		return r.header.Get(key)
+	}
+	return ""
+}
+
+func (r *Response)SubHeader(key,subkey string)string{
+	if r.header == nil{
+		return ""
+	}
+	ss:=strings.Split(r.header.Get(key),";")
+	for _, s := range ss {
+		kvs:=strings.SplitN(s,"=",2)
+		if len(kvs) <2{
+			continue
+		}
+		if strings.TrimSpace(kvs[0])==subkey{
+			return strings.TrimSpace(kvs[1])
+		}
+	}
+	return ""
+
+}
 
 func GET()*Request{
 	return NewRequest().GET()
@@ -281,6 +327,4 @@ func GET()*Request{
 func POST()*Request{
 	return NewRequest().POST()
 }
-
-
 

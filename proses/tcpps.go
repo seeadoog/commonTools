@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"os"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -21,6 +22,8 @@ type tcpsrv struct {
 	timeout time.Duration
 	retry int
 	logger
+	upstreamDump string
+	downstreamDump string
 }
 
 func (s *tcpsrv)getUpstream()string{
@@ -37,7 +40,7 @@ func (s *tcpsrv)dialWithRetry(num int)(net.Conn,error){
 		}
 		return conn,nil
 	}
-	return nil,errors.New("not connection could be made to target server")
+	return nil,errors.New("no connection could be made to target server")
 }
 
 func (s *tcpsrv)runServer()error{
@@ -63,10 +66,29 @@ func (s *tcpsrv)handleConn(c net.Conn){
 	if err != nil{
 		c.Write([]byte(err.Error()))
 		s.logger.Error("dail error",err)
+		c.Close()
 		return
 	}
-	go copyBuffer(upConn,c)
-	copyBuffer(c,upConn)
+
+
+
+
+	var up,down *os.File
+	if s.upstreamDump != ""{
+		up,err = os.OpenFile(s.upstreamDump,os.O_WRONLY|os.O_RDONLY|os.O_CREATE|os.O_APPEND,0666)
+		if err != nil{
+			s.logger.Error("create upstream dump error",err)
+		}
+	}
+	if s.downstreamDump != ""{
+		down,err = os.OpenFile(s.downstreamDump,os.O_WRONLY|os.O_RDONLY|os.O_CREATE|os.O_APPEND,0666)
+		if err != nil{
+			s.logger.Error("create upstream dump error",err)
+		}
+	}
+
+	go copyBuffer(upConn,c,up)
+	copyBuffer(c,upConn,down)
 }
 
 var bufferPool = sync.Pool{}
@@ -79,7 +101,7 @@ func init(){
 }
 
 
-func copyBuffer(dst net.Conn,src net.Conn){
+func copyBuffer(dst net.Conn,src net.Conn,dump *os.File){
 	buf:=bufferPool.Get().([]byte)
 	for{
 		n,err:=src.Read(buf) // 读的连接出现异常，关闭写
@@ -87,6 +109,9 @@ func copyBuffer(dst net.Conn,src net.Conn){
 			dst.Close()
 			src.Close()
 			goto end
+		}
+		if dump != nil{
+			dump.Write(buf[:n])
 		}
 		_,err=dst.Write(buf[:n])
 		if err != nil{

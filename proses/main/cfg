@@ -1,0 +1,6 @@
+tcp{
+    mysql {
+        listen: 8066
+        addrs 12.21.12.11:8066
+    }
+}

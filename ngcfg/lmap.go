@@ -1,4 +1,7 @@
 package ngcfg
+
+import "encoding/json"
+
 // 有序map
 type MapElem struct {
 	Key  string
@@ -6,6 +9,10 @@ type MapElem struct {
 	next *MapElem
 	pre  *MapElem
 	l *LinkedMap
+}
+
+func (e *MapElem)MarshalJSON()([]byte,error){
+	return json.Marshal(e.Val)
 }
 
 func (m *MapElem)Next()*MapElem{

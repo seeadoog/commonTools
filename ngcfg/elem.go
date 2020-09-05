@@ -1,12 +1,18 @@
 package ngcfg
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 )
 
 type Elem struct {
 	data *LinkedMap
+}
+
+
+func (e *Elem)MarshalJSON()([]byte,error){
+	return json.Marshal(e.data.data)
 }
 
 func (e *Elem)Set(k string,v interface{})error{
@@ -21,6 +27,10 @@ func (e *Elem)Set(k string,v interface{})error{
 
 func (e *Elem)RawMap()*LinkedMap{
 	return e.data
+}
+
+func (e *Elem)Iterator()Iterator{
+	return e.data.Iterator()
 }
 
 func (e *Elem)Get(key string)interface{}{
@@ -145,11 +155,13 @@ func (e *Elem)GetElem(key string)(*Elem,error){
 	return nil,fmt.Errorf("type of %s is not elem",key)
 }
 
+
+
 func boolOf(s string)(bool,error){
 	switch s {
-	case "true","1","","on":
+	case "true","1","","on","yes","ok":
 		return true,nil
-	case "false","0","off":
+	case "false","0","off","no","never":
 		return false,nil
 	}
 	return false,fmt.Errorf("invalid bool value of %s",s)

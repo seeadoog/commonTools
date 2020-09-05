@@ -35,7 +35,10 @@ func setObject(e *Elem, val reflect.Value) error {
 		}
 		val = val.Elem()
 	}
-
+	if _,ok:=val.Interface().(Elem);ok{
+		val.Set(reflect.ValueOf(*e))
+		return nil
+	}
 	switch val.Kind() {
 	case reflect.Struct:
 		t := val.Type()
@@ -190,7 +193,6 @@ func getSingle(val []string) string {
 func setVal(val []string, v reflect.Value) error {
 	switch v.Kind() {
 	case reflect.String:
-
 		v.SetString(getSingle(val))
 		return nil
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:

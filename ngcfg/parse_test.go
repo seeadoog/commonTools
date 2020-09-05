@@ -87,6 +87,7 @@ type Config struct {
 	Kvs []map[string]string `json:"kvs"`
 	
 	Kgs []*Kgs `json:"kgs"`
+	E *Elem `json:"e"`
 }
 
 type Kgs struct {
@@ -135,6 +136,7 @@ type NginxServer struct {
 	Upstreams []Upstream `json:"upstreams"`
 	Storage *Storage `json:"storage"`
 	Args map[string]string `json:"args"`
+	E Elem `json:"e"`
 }
 
 func TestDemo(t *testing.T){
@@ -182,12 +184,38 @@ args {
 
 	"sdfsdf"  sdfsdf
 	"#ffsd sfd" sdfsff
-}`
+}
+e{
+	name strr
+	age  33
+	child{
+		name ca
+		age 5
+	}
+}
+
+mysqls{
+	1{
+		addr 22222
+		password xxxxxx
+	}
+	
+}
+
+`
 	if err:=UnmarshalFromBytes([]byte(cfg),c);err != nil{
 		panic(err)
 	}
 
 	b,_:=json.Marshal(c)
+
 	fmt.Println(string(b))
+	fmt.Println(c.E.GetBool("name"))
+	//it:=c.E.Iterator()
+	e,err:=c.E.GetElem("child")
+	if err != nil{
+		panic(err)
+	}
+	fmt.Println(e.GetString("age"))
 
 }

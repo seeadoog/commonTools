@@ -24,10 +24,7 @@ func main() {
 	//fmt.Println(a)
 	////fmt.Println(string(rsp.ReadBody()))
 
-	s:=simplehttp.NewRequest().
-		GET().
-		Url("http://172.16.59.32:9000/v2/users/validate_user?app_id=123467&uid=1234567").Do().Text()
-	fmt.Println(s)
+
 
 }
 type item struct {
